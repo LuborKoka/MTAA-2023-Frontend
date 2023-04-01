@@ -24,6 +24,11 @@ export default function CreateAccount() {
         companyName: ''
     })
 
+    function areValidValues(obj: any) {
+        return (Object.values(obj) as string[]).every(
+          (e) => e.trim().length > 0
+        )
+      }
 
     useEffect(() => {
         axios.get(`${URL}/users/register/init`)
@@ -39,6 +44,22 @@ export default function CreateAccount() {
     }
 
     function submitRegister(): void {
+        if ( !areValidValues(accData.current) ) {
+            showMessage({
+                message: 'All Fields Are Required And Must Not Be Only Whitespace',
+                type: 'danger'
+            })
+            return
+        }
+
+        if ( accData.current.password !== accData.current.confirmPassword ) {
+            showMessage({
+                message: 'Passwords Must Match.',
+                type: 'danger'
+            })
+            return
+        }
+
         setIsLoading(true)
         axios.post(`${URL}/users/register`, {
             params: {

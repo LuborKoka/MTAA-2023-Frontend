@@ -16,6 +16,13 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
     function submitLogin() {
+        if ( loginData.current.name.trim().length === 0 || loginData.current.password.trim().length === 0 ) {
+            showMessage({
+                message: 'Empty Password Or Username Field',
+                type: 'danger'
+            })
+            return
+        }
         setIsLoading(true)
         axios.post(`${URL}/users/login`, {
             params: {
