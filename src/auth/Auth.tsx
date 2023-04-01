@@ -9,10 +9,6 @@ export default function Auth() {
 
     const [element, setElement] = useState<boolean>(true)
 
-    function swapElements(v: boolean): void {
-        setElement(v)
-    }
-
     const style = StyleSheet.create({
         authContainer: {
             height: Dimensions.get('window').height,
@@ -49,7 +45,7 @@ export default function Auth() {
 
             <View style={style.navContainer}>
                 <TouchableOpacity onPress={() => {setElement(true)}} style={style.button}><Text style={style.buttonText}>Login</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => {setElement(false)}} style={style.button}><Text style={style.buttonText}>Create Account</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => {setElement(false)}} style={style.button}><Text style={style.buttonText}>SIGN UP</Text></TouchableOpacity>
             </View>
         </View>
     )

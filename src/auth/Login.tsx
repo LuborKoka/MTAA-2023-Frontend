@@ -1,10 +1,14 @@
 import axios, { AxiosResponse, AxiosError } from "axios"
-import React, { Context, useContext, useRef, useState } from "react"
-import { View, useColorScheme, StyleSheet, Text, Dimensions } from 'react-native'
+import React, { Context, useContext, useRef, useState, forwardRef } from "react"
+import { View, useColorScheme, StyleSheet, Text, Dimensions, Vibration, TextInput } from 'react-native'
 import { BLACK, GREEN, URL, UserTypes, WHITE, user } from "../../App"
-import { Input, Button, ThemeProvider, createTheme } from "@rneui/themed"
+import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
 import jwtDecode from "jwt-decode"
 import { showMessage } from 'react-native-flash-message'
+
+const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
+    <Input {...props} ref={ref as any} />
+))
 
 export default function Login() {
     const isDark = useColorScheme() === 'dark'
@@ -12,6 +16,7 @@ export default function Login() {
     const userData = useContext(user as Context<UserTypes>)
 
     const loginData = useRef<{name: string, password: string}>({name: '', password: ''})
+    const password = useRef<TextInput | null>(null)
 
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
@@ -21,6 +26,7 @@ export default function Login() {
                 message: 'Empty Password Or Username Field',
                 type: 'danger'
             })
+            Vibration.vibrate(500)
             return
         }
         setIsLoading(true)
@@ -39,10 +45,16 @@ export default function Login() {
           userData.setIsAuthenticated(true)
         }).catch( (e: any) => {
             if (e instanceof AxiosError)
-            showMessage({
-                message: e.response?.data.message,
-                type: 'danger'
-            })
+                showMessage({
+                    message: e.response?.data.message,
+                    type: 'danger'
+                })
+            if ( e.response == undefined ) 
+                showMessage({
+                    message: 'Network Error',
+                    type: 'warning'
+                })
+            Vibration.vibrate(500)
         })
         .finally(() => setIsLoading(false))
     }
@@ -62,7 +74,7 @@ export default function Login() {
         },
         headingText: {
             color: WHITE,
-            fontSize: 20
+            fontSize: 25
         },
         form: {
             paddingLeft: 5,
@@ -100,8 +112,8 @@ export default function Login() {
             <View style={{flex: 1}}>
                 <View style={style.form}>
                     <ThemeProvider theme={theme}>
-                        <Input onChangeText={ e => loginData.current.name = e} style={style.input} placeholder="Username"/>
-                        <Input onChangeText={ e => loginData.current.password = e} style={style.input} secureTextEntry placeholder="Password"/>
+                        <ForwardedInput onSubmitEditing={() => {(password.current as TextInput).focus()}} returnKeyType="next" onChangeText={ e => loginData.current.name = e} style={style.input} placeholder="Username"/>
+                        <ForwardedInput onSubmitEditing={submitLogin} ref={password} onChangeText={ e => loginData.current.password = e} style={style.input} secureTextEntry placeholder="Password"/>
                         <Button disabled={isLoading} onPress={submitLogin} title={'LOGIN'}></Button>
                     </ThemeProvider>
                 </View>
