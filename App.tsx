@@ -10,6 +10,7 @@ export const BLACK = '#202020'
 export const WHITE = '#FAFAFA'
 export const GREEN = '#549E3F'
 export const GREENRGB = '84, 147, 63'
+export const RED = '#F00F00'
 
 export interface UserTypes {
   token: string,
