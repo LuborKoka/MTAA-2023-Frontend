@@ -55,7 +55,7 @@ export default function CreateAccount() {
     function submitRegister(): void {
         if ( !areValidValues(accData.current) ) {
             showMessage({
-                message: 'All Fields Are Required And Must Not Be Only Whitespace',
+                message: 'All Fields Are Required And Must Not Be Whitespace Only',
                 type: 'danger'
             })
             Vibration.vibrate(500)
