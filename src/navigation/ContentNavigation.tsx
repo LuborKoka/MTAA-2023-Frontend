@@ -1,9 +1,9 @@
-import React from "react"
+import React, { Context, useContext } from "react"
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerContentComponentProps } from "@react-navigation/drawer";
 import Finances from "../screens/Finances";
 import Market from "../screens/Market";
 import History from "../screens/History";
-import { BLACK, GREEN, WHITE } from "../../App";
+import { BLACK, GREEN, UserTypes, WHITE, user } from "../../App";
 import { useColorScheme } from "react-native";
 import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
@@ -12,6 +12,7 @@ import { View, Text } from 'react-native'
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const isDark = useColorScheme() === 'dark'
+  const userData = useContext(user as Context<UserTypes>)
 
   return (
     <>
@@ -21,14 +22,26 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           if (route.name !== 'Cart') {
             return (
                 <DrawerItem key={index} label={route.name} onPress={() => {props.navigation.navigate(route.name)}} 
-                    labelStyle = {{
-                        color: props.state.index === index ? GREEN : isDark ? WHITE : BLACK
-                    }}      
+                  labelStyle = {{
+                    color:  isDark ? WHITE : BLACK
+                  }}    
                 />
             )
           }
           return null
         })}
+        <DrawerItem key={props.state.routes.length} label={'Logout'} onPress={() => {
+          userData.companyName = ''
+          userData.firstName = ''
+          userData.lastName = ''
+          userData.id = ''
+          userData.isAdmin = false
+          userData.token = ''
+          userData.setIsAuthenticated(false)
+        }} 
+        labelStyle = {{
+          color:  isDark ? WHITE : BLACK
+        }} />
       </DrawerContentScrollView>
     </>
     
