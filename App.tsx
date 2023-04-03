@@ -1,16 +1,8 @@
 import React, { useState, createContext, useRef } from "react"
-import { StyleSheet } from "react-native";
 import Auth from "./src/auth/Auth";
 import FlashMessage from "react-native-flash-message";
 import ContentNavigation from "./src/navigation/ContentNavigation";
 import { NavigationContainer } from "@react-navigation/native";
-
-export const URL = 'http://192.168.100.22:4001'
-export const BLACK = '#202020'
-export const WHITE = '#FAFAFA'
-export const GREEN = '#549E3F'
-export const GREENRGB = '84, 147, 63'
-export const RED = '#F00F00'
 
 export interface UserTypes {
   token: string,

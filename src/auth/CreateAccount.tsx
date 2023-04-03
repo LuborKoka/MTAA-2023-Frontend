@@ -1,11 +1,12 @@
 import React, { Context, useContext, useEffect, useRef, useState, forwardRef } from "react"
 import { Dimensions, useColorScheme, Vibration, TextInput } from 'react-native'
 import { View, Text, StyleSheet } from 'react-native'
-import { BLACK, GREEN, URL, UserTypes, WHITE, user } from "../../App"
+import { UserTypes,user } from "../../App"
 import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
 import axios, { AxiosError, AxiosResponse } from "axios"
 import SelectDropdown from "react-native-select-dropdown"
 import { showMessage } from 'react-native-flash-message'
+import { BLACK, WHITE, GREEN } from "../constants/constants"
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />

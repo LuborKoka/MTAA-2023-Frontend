@@ -3,11 +3,12 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerConte
 import Finances from "../screens/Finances";
 import Market from "../screens/Market";
 import History from "../screens/History";
-import { BLACK, GREEN, UserTypes, WHITE, user } from "../../App";
+import { UserTypes, user } from "../../App";
 import { useColorScheme } from "react-native";
 import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
-import { View, Text } from 'react-native'
+import { View } from 'react-native'
+import { WHITE, BLACK, GREEN } from "../constants/constants";
 
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -23,7 +24,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             return (
                 <DrawerItem key={index} label={route.name} onPress={() => {props.navigation.navigate(route.name)}} 
                   labelStyle = {{
-                    color:  isDark ? WHITE : BLACK
+                    color: props.state.index === index ? GREEN :  isDark ? WHITE : BLACK
                   }}    
                 />
             )
@@ -71,7 +72,7 @@ export default function ContentNavigation(): JSX.Element {
     >
       <Drawer.Screen name="Finances" component={Finances} />
       <Drawer.Screen name="Market" component={Market} />
-      <Drawer.Screen name="History" component={History} />
+      <Drawer.Screen name="Purchase History" component={History} />
       <Drawer.Screen name="Cart" component={Cart} />
     </Drawer.Navigator>
   )

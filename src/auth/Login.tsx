@@ -1,10 +1,11 @@
 import axios, { AxiosResponse, AxiosError } from "axios"
 import React, { Context, useContext, useRef, useState, forwardRef } from "react"
 import { View, useColorScheme, StyleSheet, Text, Dimensions, Vibration, TextInput } from 'react-native'
-import { BLACK, GREEN, URL, UserTypes, WHITE, user } from "../../App"
+import { UserTypes, user } from "../../App"
 import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
 import jwtDecode from "jwt-decode"
 import { showMessage } from 'react-native-flash-message'
+import { WHITE, BLACK, GREEN } from "../constants/constants"
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />

@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useColorScheme, StyleSheet, View, Text, TouchableOpacity, Dimensions } from "react-native"
 import Login from "./Login"
 import CreateAccount from "./CreateAccount"
-import { BLACK, GREEN, GREENRGB, WHITE } from "../../App"
+import { BLACK, GREEN, GREENRGB, WHITE } from "../constants/constants"
 
 export default function Auth() {
     const isDark = useColorScheme() === 'dark'

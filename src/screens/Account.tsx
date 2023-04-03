@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Animated, Easing } from 'react-native'
 import React, { useState, useRef } from 'react'
-import { BLACK, GREEN, RED, WHITE } from '../../App'
+import { BLACK, GREEN, RED, WHITE } from "../constants/constants"
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import MIcon from 'react-native-vector-icons/MaterialCommunityIcons'
 
