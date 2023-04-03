@@ -5,7 +5,7 @@ import { UserTypes, user } from "../../App"
 import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
 import jwtDecode from "jwt-decode"
 import { showMessage } from 'react-native-flash-message'
-import { WHITE, BLACK, GREEN } from "../constants/constants"
+import { WHITE, BLACK, GREEN, URL } from "../constants/constants"
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />
