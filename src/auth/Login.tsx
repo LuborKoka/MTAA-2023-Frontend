@@ -45,15 +45,15 @@ export default function Login() {
           userData.isAdmin = d.role === 'admin user'
           userData.setIsAuthenticated(true)
         }).catch( (e: any) => {
-            if (e instanceof AxiosError)
-                showMessage({
-                    message: e.response?.data.message,
-                    type: 'danger'
-                })
             if ( e.response == undefined ) 
                 showMessage({
-                    message: 'Network Error',
-                    type: 'warning'
+                message: 'Network Error',
+                type: 'warning'
+                })
+            else (e instanceof AxiosError) 
+                showMessage({
+                message: e.response?.data.message,
+                type: 'danger'
                 })
             Vibration.vibrate(500)
         })

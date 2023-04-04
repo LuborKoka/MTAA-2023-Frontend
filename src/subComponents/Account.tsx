@@ -24,6 +24,17 @@ interface payment {
 }
 
 
+export function formatNumber(n: number) {
+    const roundedNumber = Math.round(n * 100) / 100
+
+    const [integerPart, decimalPart] = roundedNumber.toString().split('.')
+
+    //tuto som bez hanby okopiroval z chatgpt replace funkciu
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+
+    return `${formattedInteger}.${decimalPart === undefined ? '00' : decimalPart}€`
+}
+
 
 export default function Account({ account }: props) {
     const isDark = useColorScheme() === 'dark'
@@ -34,17 +45,6 @@ export default function Account({ account }: props) {
     const rotation = useRef(new Animated.Value(0)).current
     const height = useRef(new Animated.Value(0)).current
     const paymentsHeight = useRef<number>(0)
-
-    function formatNumber(n: number) {
-        const roundedNumber = Math.round(n * 100) / 100
-      
-        const [integerPart, decimalPart] = roundedNumber.toString().split('.')
-
-        //tuto som bez hanby okopiroval z chatgpt replace funkciu
-        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-
-        return `${formattedInteger}.${decimalPart === undefined ? '00' : decimalPart}€`
-      }
 
     const openPayments = () => {
         Animated.timing(rotation, {
