@@ -1,10 +1,9 @@
-import { Text } from "@rneui/base"
-import React, { Context, useContext, useEffect, useRef, useState } from "react"
+import React, { Context, useContext, useEffect, useState } from "react"
 import { UserTypes, user } from "../../App"
 import { useColorScheme, View, StyleSheet } from "react-native"
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { showMessage } from "react-native-flash-message"
-import Account from "./Account"
+import Account from "../subComponents/Account"
 import { BLACK, GREEN, WHITE, URL } from "../constants/constants"
 
 interface response {
