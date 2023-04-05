@@ -43,6 +43,7 @@ export default function Login() {
           userData.lastName = d.lastName
           userData.id = d.id
           userData.isAdmin = d.role === 'admin user'
+          userData.token = r.data.data.token
           userData.setIsAuthenticated(true)
         }).catch( (e: any) => {
             if ( e.response == undefined ) 

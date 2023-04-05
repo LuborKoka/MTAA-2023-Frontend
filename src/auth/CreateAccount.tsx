@@ -7,10 +7,21 @@ import axios, { AxiosError, AxiosResponse } from "axios"
 import SelectDropdown from "react-native-select-dropdown"
 import { showMessage } from 'react-native-flash-message'
 import { BLACK, WHITE, GREEN, URL } from "../constants/constants"
+import jwtDecode from "jwt-decode"
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />
 ))
+
+
+interface res {
+    firstName: string, 
+    lastName: string, 
+    companyName: string,
+    role: string,
+    userID: string,
+    iat: string
+}
 
 
 export default function CreateAccount() {
@@ -82,10 +93,18 @@ export default function CreateAccount() {
                 login: accData.current.username
             }
         })
-        .then( () => {
+        .then( (r: AxiosResponse) => {
+            const response = jwtDecode(r.data.data.token) as res
+            userData.companyName = response.companyName
+            userData.firstName = response.firstName
+            userData.lastName = response.lastName
+            userData.id = response.userID
+            userData.isAdmin = response.role === 'admin user'
+            userData.token = r.data.data.token
             userData.setIsAuthenticated(true)
         })
         .catch( (e: any) => {
+            console.log(e)
             if ( e.response == undefined ) 
                 showMessage({
                 message: 'Network Error',
