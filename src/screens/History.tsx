@@ -1,4 +1,4 @@
-import { View, Text, useColorScheme, StyleSheet, Dimensions } from 'react-native'
+import { ScrollView, View, Text, useColorScheme, StyleSheet, Dimensions } from 'react-native'
 import React, { Context, useContext, useEffect, useState } from 'react'
 import { BLACK, RED, URL, WHITE } from '../constants/constants'
 import { UserTypes, user } from '../../App'
@@ -8,15 +8,10 @@ import Item from '../subComponents/historyItem'
 import Icon from 'react-native-vector-icons/FontAwesome'
 
 interface response {
-  accounts: {
-      iban: string,
-      balance: number,
-      payments: {
-          total: number,
-          invoiceID: string,
-          isIncoming: boolean,
-          paidAt: string
-      }[]
+  payments: {
+    total: number,
+    invoiceID: string,
+    paidAt: string
   }[]
 }
 
@@ -30,17 +25,15 @@ export default function History() {
   const userData = useContext(user as Context<UserTypes>)
 
   useEffect( ()=> {
-    axios.get(`${URL}/finances/init/${userData.companyName}`, {
+    axios.get(`${URL}/init/invoices/${userData.companyName}`, {
       headers: {
         Authorization: `Bearer ${userData.token}`
       }
     })
     .then( (r: AxiosResponse) => {
-      (r.data as response).accounts.forEach( a => {
-        setItems( p => [...p, ...a.payments.filter(e => !e.isIncoming).map( (p, i) => {
-          return <Item token={userData.token} invoiceID={p.invoiceID} date={p.paidAt} amount={p.total} setPdf={setPdf} key={`${p.invoiceID}${i}`}/>
-        })])
-      })
+      setItems( p => [...p, ...(r.data as response).payments.map( (p, i) => 
+        <Item token={userData.token} invoiceID={p.invoiceID} date={p.paidAt} amount={p.total} setPdf={setPdf} key={`${p.invoiceID}${i}`}/>
+      )])
     })
     .catch((e: any) => {
       if (e instanceof AxiosError) 
@@ -59,7 +52,7 @@ export default function History() {
 
   return (
     pdf == null ?
-    <View style={{backgroundColor: isDark ? BLACK : WHITE, ...style.container}}>
+    <ScrollView style={{backgroundColor: isDark ? BLACK : WHITE, ...style.container}}>
       
       { (items.length === 0) ?
       <View style={{alignItems: 'center', paddingTop: 50}}>
@@ -74,7 +67,7 @@ export default function History() {
       {items}
       </>
     }
-    </View>
+    </ScrollView>
     : pdf
   )
 }

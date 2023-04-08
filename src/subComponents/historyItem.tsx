@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react'
 import RNFetchBlob from 'rn-fetch-blob'
-import { useColorScheme, View, Text, TouchableOpacity, Dimensions, StyleSheet, Platform } from 'react-native'
+import { useColorScheme, View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native'
 import Icon from 'react-native-vector-icons/Entypo'
 import ADIcon from 'react-native-vector-icons/AntDesign'
 import FIcon from 'react-native-vector-icons/Fontisto'

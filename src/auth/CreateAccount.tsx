@@ -1,5 +1,5 @@
 import React, { Context, useContext, useEffect, useRef, useState, forwardRef } from "react"
-import { Dimensions, useColorScheme, Vibration, TextInput } from 'react-native'
+import { Dimensions, useColorScheme, Vibration, TextInput, ScrollView } from 'react-native'
 import { View, Text, StyleSheet } from 'react-native'
 import { UserTypes,user } from "../../App"
 import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
@@ -31,6 +31,7 @@ export default function CreateAccount() {
 
     const [options, setOptions] = useState<string[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [height, setHeight] = useState(Dimensions.get('window').height)
 
     const lastName = useRef<TextInput | null>(null)
     const password = useRef<TextInput | null>(null)
@@ -49,14 +50,25 @@ export default function CreateAccount() {
         return (Object.values(obj) as string[]).every(
           (e) => e.trim().length > 0
         )
-      }
+    }
+
+
+    
 
     useEffect(() => {
+        function changeHeight() {
+            setHeight(Dimensions.get('window').height)
+        }
+
+        const listener = Dimensions.addEventListener('change', changeHeight)
+
         axios.get(`${URL}/users/register/init`)
         .then( (e: AxiosResponse) => {
             setOptions(e.data.names)
         })
         .catch( (e: AxiosError) => console.log(e.response))
+
+        return( () => listener.remove())
     }, [])
 
 
@@ -90,7 +102,7 @@ export default function CreateAccount() {
                 lastName: accData.current.lastName,
                 company: accData.current.companyName,
                 password: accData.current.password,
-                login: accData.current.username
+                login: accData.current.username.trimEnd()
             }
         })
         .then( (r: AxiosResponse) => {
@@ -110,7 +122,7 @@ export default function CreateAccount() {
                 message: 'Network Error',
                 type: 'warning'
                 })
-            else (e instanceof AxiosError) 
+            else if (e instanceof AxiosError) 
                 showMessage({
                 message: e.response?.data.message,
                 type: 'danger'
@@ -183,7 +195,7 @@ export default function CreateAccount() {
 
 
     return(
-        <View>
+        <ScrollView style={{maxHeight: height}}>
             <View style={style.heading}>
                 <Text style={style.headingText}>SIGN UP</Text>
             </View>
@@ -200,7 +212,7 @@ export default function CreateAccount() {
                 </ThemeProvider>
                 
             </View>
-        </View>
+        </ScrollView>
     )
 }
 

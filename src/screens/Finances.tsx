@@ -1,6 +1,6 @@
 import React, { Context, useContext, useEffect, useState } from "react"
 import { UserTypes, user } from "../../App"
-import { useColorScheme, View, StyleSheet } from "react-native"
+import { useColorScheme, StyleSheet, ScrollView } from "react-native"
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { showMessage } from "react-native-flash-message"
 import Account from "../subComponents/Account"
@@ -29,7 +29,7 @@ export default function Finances(): JSX.Element {
     const style = StyleSheet.create({
         container: {
             backgroundColor: isDark ? BLACK : WHITE,
-            flex: 1,
+            flexGrow: 1,
             paddingHorizontal: 10,
             borderBottomColor: GREEN
         },
@@ -64,8 +64,8 @@ export default function Finances(): JSX.Element {
     
     
     return(
-        <View style={style.container}>
+        <ScrollView style={style.container}>
             {elements}
-        </View>
+        </ScrollView>
     )
 }
