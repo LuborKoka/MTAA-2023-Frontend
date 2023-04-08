@@ -19,7 +19,7 @@ interface res {
     lastName: string, 
     companyName: string,
     role: string,
-    userID: string,
+    id: string,
     iat: string
 }
 
@@ -110,7 +110,7 @@ export default function CreateAccount() {
             userData.companyName = response.companyName
             userData.firstName = response.firstName
             userData.lastName = response.lastName
-            userData.id = response.userID
+            userData.id = response.id
             userData.isAdmin = response.role === 'admin user'
             userData.token = r.data.data.token
             userData.setIsAuthenticated(true)
