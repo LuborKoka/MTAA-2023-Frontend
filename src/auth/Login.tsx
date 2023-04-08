@@ -33,7 +33,7 @@ export default function Login() {
         setIsLoading(true)
         axios.post(`${URL}/users/login`, {
             params: {
-                login: loginData.current.name,
+                login: loginData.current.name.trimEnd(),
                 password: loginData.current.password
             }
         }).then( (r: AxiosResponse) => {
@@ -51,7 +51,7 @@ export default function Login() {
                 message: 'Network Error',
                 type: 'warning'
                 })
-            else (e instanceof AxiosError) 
+            else if (e instanceof AxiosError) 
                 showMessage({
                 message: e.response?.data.message,
                 type: 'danger'
