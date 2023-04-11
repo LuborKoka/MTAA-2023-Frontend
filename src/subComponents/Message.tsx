@@ -20,11 +20,37 @@ export default function Message({ isIncoming = false, content }: messageProps) {
     const isOnlyEmoji = findEmoji(content)
 
     const bgColor = !isIncoming ? GREEN : isDark ? LIGHTER_BLACK : DARKER_WHITE
-    const txtColor = !isIncoming ? WHITE : isDark ? WHITE : BLACK
+
+    const style = StyleSheet.create({
+        messageText: {
+            flexDirection: 'row',
+            flex: 1,
+            flexWrap: 'wrap',
+            minHeight: 20,
+            borderRadius: 17,
+            paddingHorizontal: 10,
+            paddingTop: isOnlyEmoji ? 0 : 5,
+            paddingBottom: isOnlyEmoji ? 0 : 7,
+            color: !isIncoming ? WHITE : isDark ? WHITE : BLACK,
+            backgroundColor: isOnlyEmoji ? 'transparent' : bgColor, textAlign: 'left', 
+            fontSize: isOnlyEmoji ? 24 : 14
+        },
+        message: {
+            maxWidth: Dimensions.get('window').width * .7,
+            justifyContent: 'flex-end',
+            marginTop: isOnlyEmoji ? 0 : 10,
+            marginLeft: isIncoming ? isOnlyEmoji ? 0 : 5 : 0,
+            marginRight: isIncoming ? 0 : isOnlyEmoji ? 0 : 5
+        },
+        container: {
+            justifyContent: isIncoming ? 'flex-start' : 'flex-end', 
+            flexDirection: 'row'
+        }
+    })
     return(
-        <View style={{justifyContent: isIncoming ? 'flex-start' : 'flex-end', flexDirection: 'row'}}>
-            <View style={{...style.message, maxWidth: Dimensions.get('window').width * .7}} >
-                <Text style={{...style.messageText, color: txtColor, backgroundColor: isOnlyEmoji ? 'transparent' : bgColor, textAlign: 'left', fontSize: isOnlyEmoji ? 24 : 14}} >
+        <View style={style.container}>
+            <View style={style.message} >
+                <Text style={style.messageText} >
                     {content}
                 </Text>
             </View>
@@ -33,21 +59,3 @@ export default function Message({ isIncoming = false, content }: messageProps) {
 }
 
 
-const style = StyleSheet.create({
-    messageText: {
-        flexDirection: 'row',
-        flex: 1,
-        flexWrap: 'wrap',
-        minHeight: 20,
-        borderRadius: 17,
-        paddingHorizontal: 10,
-        paddingTop: 5,
-        paddingBottom: 7
-    },
-    message: {
-        
-        justifyContent: 'flex-end',
-        
-        marginTop: 10
-    }
-})

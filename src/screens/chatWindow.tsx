@@ -9,6 +9,8 @@ import 'react-native-get-random-values'
 import { v4 } from 'uuid';
 import { ServerTypes, UserTypes, serverContext, user } from '../../App'
 import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
+//src: https://pixabay.com/sound-effects/search/messaging/
+import Sound from 'react-native-sound'
 
 
 interface props {
@@ -50,7 +52,12 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     const content = useRef<ScrollView | null>(null)
 
     const input = useRef('')
-    const audio = useRef<any>()
+    const audio = useRef(new Sound('new_message.mp3', Sound.MAIN_BUNDLE, (error) => {
+        if (error) {
+          console.log('Failed to load the sound', error)
+          return
+        }
+    }))
 
     const inputComponent = useRef<TextInput | null>(null)
     const history = useRef<storage['messages']>([])
@@ -81,6 +88,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     outputRange: [Dimensions.get('window').width, 0]
     })
       
+    
       
     function pushNewMessage() {
         if (ws.server == null ) return
@@ -106,12 +114,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
 
     function startRecording() {
         setIsRecording(true)
-       /* const audioPath = `${RNFS.DocumentDirectoryPath}/voice_recording.aac`
-        console.log(audioPath)
-*/
-        //AudioRecorder.prepareRecordingAtPath(null, {
-        //    SampleRate: 22000
-        //})
+        //pokial sa ti podari spojazdnit nejaku libku na to.. 
     }
 
     function deleteRecording() {
@@ -164,6 +167,8 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                     setMessages((prevMessages) => [
                         ...prevMessages, <Message key={v4()} content={message.data.content} isIncoming />
                     ])
+                    audio.current.play()
+                    setTimeout(() => audio.current.stop(), 1000)
                 }
                 else setIncomingMessageFromAnotherUser(message.data.from, userData.id, message.data.content)
             }
@@ -172,7 +177,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         return (() => {
             (ws.server as WebSocket).onmessage = null
         })
-    }, [ws.server, userID])
+    }, [ws.server, userID, audio.current])
 
     useEffect(() => {
         getHistory()
