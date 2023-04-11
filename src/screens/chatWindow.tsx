@@ -1,6 +1,6 @@
 import { KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput} from 'react-native'
 import React, { Context, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, RED, WHITE } from '../constants/constants'
+import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, RED, URL, WHITE } from '../constants/constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import OIcon from 'react-native-vector-icons/Octicons'
 import FAIcon from 'react-native-vector-icons/FontAwesome'
@@ -93,6 +93,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     function pushNewMessage() {
         if (ws.server == null ) return
         const content = input.current.trim()
+        if ( content === '' ) return
         const message = JSON.stringify({
             type: 'MESSAGE',
             data: {
@@ -103,6 +104,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         })
         setMessages(p => [...p, <Message key={v4()} content={content} />]);
         (inputComponent.current as TextInput).clear()
+        input.current = ''
         ws.server.send(message)
         history.current.push({isIncoming: false, content: content})
     }
@@ -121,7 +123,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         setIsRecording(false)
     }
 
-    const getHistory = useCallback( async () =>{
+    const showHistory = useCallback( async () =>{
         try {
             const d = await getItem()
             if ( d !== null ) {
@@ -151,14 +153,6 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [isOpenChat])
 
     useEffect(() => {
-        (ws.server as WebSocket).send(JSON.stringify({
-            type: 'REQUIRE_UNSENT',
-            data: {
-                from: userID,
-                to: userData.id
-            }
-        } as {type: string, data: {from: string, to: string}}));
-
         (ws.server as WebSocket).onmessage = (e) => {
             const message = JSON.parse(e.data) as message
             if (message.type === 'MESSAGE') {
@@ -180,7 +174,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [ws.server, userID, audio.current])
 
     useEffect(() => {
-        getHistory()
+        showHistory()
 
         return( () => {
             if ( history.current.length > 0 ) {
@@ -188,8 +182,9 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                 setItem(d)
             }
             history.current = []
+            //AsyncStorage.clear()
         })  
-    }, [getHistory, userID])
+    }, [showHistory, userID])
 
     return (
         <Animated.View style={{...style.animatedContainer, transform: [{translateX: translateX}]}}>

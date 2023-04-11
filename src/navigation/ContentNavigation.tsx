@@ -1,4 +1,4 @@
-import React, { Context, createContext, useContext, useEffect, useRef } from "react"
+import React, { Context, useCallback, useContext, useEffect } from "react"
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerContentComponentProps } from "@react-navigation/drawer";
 import Finances from "../screens/Finances";
 import Market from "../screens/Market";
@@ -9,6 +9,25 @@ import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants";
 import Chat from "../screens/Chat";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { AxiosResponse } from 'axios'
+
+interface Chat_Update {
+  users: {
+      id: string,
+      messages: {
+          isIncoming: boolean,
+          content: string
+      }[]
+  }[]
+}
+
+interface storage {
+  messages: {
+      isIncoming: boolean,
+      content: string
+  }[]
+}
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const isDark = useColorScheme() === 'dark'
@@ -57,9 +76,55 @@ export default function ContentNavigation(): JSX.Element {
 
   const Drawer = createDrawerNavigator()
 
+  const getHistory = useCallback( async () => {
+    let time: string | null = null
+    try {
+        time = await AsyncStorage.getItem(`lastOnline_${userData.id}`)
+    } catch (e: any) {
+        console.log(e)
+    }
+
+    try {
+        const r: AxiosResponse = await axios.get(`${URL}/chat/update/${userData.id}${time == null ? '' : `?time=${time}`}`, {
+            headers: {
+                Authorization: `Bearer ${userData.token}`
+            }
+        });
+
+        (r.data as Chat_Update).users.forEach(u => {
+            const messages = u.messages.map(m => {return {
+                isIncoming: m.isIncoming,
+                content: m.content
+            }})
+            AsyncStorage.getItem(`me_${userData.id}_with_${u.id}`)
+            .then((e) => {
+                const history = e == null ? '' : JSON.parse(e) as storage
+                if ( history !== '' ) {
+                    history.messages.push(...messages)
+                    AsyncStorage.setItem(`me_${userData.id}_with_${u.id}`, JSON.stringify(history))
+                } else {
+                    AsyncStorage.setItem(`me_${userData.id}_with_${u.id}`, JSON.stringify({
+                        messages: messages
+                    } as storage))
+                }
+            }).catch()
+        })
+    } catch (e: any) {
+        console.log(e)
+    }
+    finally {
+      AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
+    }
+  }, [userData.id, AsyncStorage])
+
+  //tymto padom ten dalsi effect by mal byt zbytocny, ak toto teda bude fungovat
+  useEffect(() => {
+    getHistory()
+  }, [userData.id, getHistory])
+
   useEffect(() => {
     ws.server = new WebSocket(URL)
-    
+    AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
     ws.server.onopen = () => {
       const user = {type: 'USER_ID', data: userData.id};
       (ws.server as WebSocket).send(JSON.stringify(user))
@@ -67,9 +132,11 @@ export default function ContentNavigation(): JSX.Element {
 
     return( () => {
       const logout = JSON.stringify({type: 'LOGOUT', data: userData.id})
+      
       userData.id = '';
       (ws.server as WebSocket).send(logout);
       (ws.server as WebSocket).close(1000, 'Logout')
+      AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
     })
     
   }, [])
@@ -79,8 +146,7 @@ export default function ContentNavigation(): JSX.Element {
       initialRouteName="Finances"
       screenOptions={({ navigation }) => ({
         headerStyle: {
-          backgroundColor: GREEN,
-          height: 55
+          backgroundColor: GREEN
         },
         headerTintColor: WHITE,
         drawerStyle: {
