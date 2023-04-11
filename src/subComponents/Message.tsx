@@ -11,14 +11,20 @@ interface messageProps {
 export default function Message({ isIncoming = false, content }: messageProps) {
     const isDark = useColorScheme() === 'dark'
 
-    const regex = emojiRegex()
+    function findEmoji(content: string) {
+        const emojiOnlyRegex = emojiRegex()
+        const emojis = content.match(emojiOnlyRegex)
+        return emojis !== null && content.length === emojis.join('').length
+    }
+
+    const isOnlyEmoji = findEmoji(content)
 
     const bgColor = !isIncoming ? GREEN : isDark ? LIGHTER_BLACK : DARKER_WHITE
     const txtColor = !isIncoming ? WHITE : isDark ? WHITE : BLACK
     return(
         <View style={{justifyContent: isIncoming ? 'flex-start' : 'flex-end', flexDirection: 'row'}}>
             <View style={{...style.message, maxWidth: Dimensions.get('window').width * .7}} >
-                <Text style={{...style.messageText, color: txtColor, backgroundColor: bgColor, textAlign: 'left', fontSize: regex.test(content) ? 22 : 12}} >
+                <Text style={{...style.messageText, color: txtColor, backgroundColor: isOnlyEmoji ? 'transparent' : bgColor, textAlign: 'left', fontSize: isOnlyEmoji ? 24 : 14}} >
                     {content}
                 </Text>
             </View>

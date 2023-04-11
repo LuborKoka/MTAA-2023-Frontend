@@ -59,7 +59,7 @@ export default function Chat() {
                 type: 'danger'
                 })
         })
-    }, [])
+    }, [userData.id])
 
     return (
         <>

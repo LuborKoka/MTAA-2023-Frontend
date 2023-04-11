@@ -1,13 +1,15 @@
 import { KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput} from 'react-native'
 import React, { Context, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, WHITE } from '../constants/constants'
+import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, RED, WHITE } from '../constants/constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import OIcon from 'react-native-vector-icons/Octicons'
+import FAIcon from 'react-native-vector-icons/FontAwesome'
 import Message from '../subComponents/Message'
 import 'react-native-get-random-values'
 import { v4 } from 'uuid';
 import { ServerTypes, UserTypes, serverContext, user } from '../../App'
 import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
+
 
 interface props {
     setIsOpenChat: React.Dispatch<React.SetStateAction<boolean>>,
@@ -42,10 +44,14 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     const ws = useContext(serverContext as Context<ServerTypes>)
 
     const [messages, setMessages] = useState<JSX.Element[]>([])
+    const [isRecording, setIsRecording] = useState(false)
 
     const position = useRef(new Animated.Value(0)).current
     const content = useRef<ScrollView | null>(null)
+
     const input = useRef('')
+    const audio = useRef<any>()
+
     const inputComponent = useRef<TextInput | null>(null)
     const history = useRef<storage['messages']>([])
 
@@ -98,6 +104,19 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [])
 
 
+    function startRecording() {
+        setIsRecording(true)
+       /* const audioPath = `${RNFS.DocumentDirectoryPath}/voice_recording.aac`
+        console.log(audioPath)
+*/
+        //AudioRecorder.prepareRecordingAtPath(null, {
+        //    SampleRate: 22000
+        //})
+    }
+
+    function deleteRecording() {
+        setIsRecording(false)
+    }
 
     const getHistory = useCallback( async () =>{
         try {
@@ -139,8 +158,6 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
 
         (ws.server as WebSocket).onmessage = (e) => {
             const message = JSON.parse(e.data) as message
-            //doplnit, zobrazenie spravy do spravnehu chat
-            //ulozit spravu do spravneho async storage
             if (message.type === 'MESSAGE') {
                 if ( message.data.from === userID ) {
                     history.current.push({isIncoming: true, content: message.data.content})
@@ -192,6 +209,15 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                 </ScrollView>
 
                 <View style={style.inputContainer}>
+                    { isRecording ? 
+                    <TouchableOpacity style={{paddingRight: 5}} onPress={deleteRecording} >
+                        <FAIcon name='trash' style={{color: RED, fontSize: 26}} />
+                    </TouchableOpacity>
+                        :
+                    <TouchableOpacity style={{paddingRight: 5}} onPress={startRecording}>
+                        <Icon name='microphone' style={{color: GREEN, fontSize: 26}} />
+                    </TouchableOpacity>
+                    }
                     <TextInput onFocus={scrollDown} multiline ref={inputComponent} onChangeText={(t) => input.current = t} placeholder='Your Message' placeholderTextColor={GREEN} style={{...style.textInput, backgroundColor: bgColor, color: txtColor}} />
                     <TouchableOpacity onPress={pushNewMessage}>
                         <OIcon name='paper-airplane' style={{color: GREEN, fontSize: 26}} />
@@ -226,7 +252,7 @@ const style = StyleSheet.create({
     inputContainer: {
         paddingTop: 10,
         paddingBottom: 5,
-        paddingHorizontal: 15,
+        paddingHorizontal: 25,
         flexDirection: 'row',
         columnGap: 10,
         alignItems: 'center'
