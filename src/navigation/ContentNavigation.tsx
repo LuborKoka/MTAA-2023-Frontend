@@ -11,6 +11,9 @@ import { WHITE, BLACK, GREEN, URL } from "../constants/constants";
 import Chat from "../screens/Chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosResponse } from 'axios'
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import { View, Text, StyleSheet } from 'react-native'
+import LinearGradient from "react-native-linear-gradient";
 
 interface Chat_Update {
   users: {
@@ -42,9 +45,42 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     userData.setIsAuthenticated(false)
   }
 
+  const color = isDark ? WHITE : BLACK
+
+  const gradientColors = ['transparent', color, color, color, color, 'transparent']
+  const style = StyleSheet.create({
+    user: {
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      paddingVertical: 15,
+      marginBottom: 10
+    },
+    gradientBorder: {
+      position: 'absolute',
+      left: 0,
+      bottom: 0,
+      width: '100%',
+      height: 1,
+      opacity: .4
+    }
+  })
+
   return (
     <>
       <DrawerContentScrollView {...props}>
+      <View style={style.user}>
+        <View style={style.gradientBorder}>
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ flex: 1, height: 1 }}
+          />
+        </View>
+          <Icon name="account-box" style={{color: GREEN, fontSize: 45}} />
+          <Text style={{color: isDark ? WHITE : BLACK, fontSize: 15}}>{userData.firstName} {userData.lastName}</Text>
+          <Text style={{color: isDark ? WHITE : BLACK, fontSize: 12, opacity: .6}}>{userData.companyName}</Text>
+        </View>
         {props.state.routes.map((route, index) => {
           if (route.name !== 'Cart') {
             return (

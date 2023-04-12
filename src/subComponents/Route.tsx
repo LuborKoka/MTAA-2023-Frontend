@@ -21,8 +21,7 @@ interface props {
 
 export default function Route({firstName, lastName, userID, companyName, setIsChatOpen, setChatData}: props) {
     const isDark = useColorScheme() === 'dark'
-    const { width, height, fontScale } = useWindowDimensions()
-    const fontSize = Math.min(width, height) * 0.04 * fontScale * .5
+    const { width } = useWindowDimensions()
 
     async function open() {
         setIsChatOpen(true)
@@ -38,10 +37,10 @@ export default function Route({firstName, lastName, userID, companyName, setIsCh
         <TouchableOpacity onPress={open} style={{...style.routeContainer, borderColor: isDark ? 'rgba(234, 234, 234, .1)' : 'rgba(48, 48, 48, .1)', columnGap: width * .07}} >
             <Image source={image} style={{width: 50, height: 50, borderRadius: 25}} />
             <View>
-                <Text style={{color: isDark ? WHITE : BLACK, ...style.route, fontSize: fontSize}}>
+                <Text style={{color: isDark ? WHITE : BLACK, ...style.route}} adjustsFontSizeToFit>
                     {`${firstName} ${lastName}`}
                 </Text>
-                <Text style={{color: isDark ? WHITE : BLACK, opacity: .6, fontSize: fontSize - 2}}>
+                <Text style={{color: isDark ? WHITE : BLACK, opacity: .6}} adjustsFontSizeToFit maxFontSizeMultiplier={1.1}> 
                     {companyName}
                 </Text>
             </View>
