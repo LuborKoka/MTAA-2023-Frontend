@@ -1,11 +1,23 @@
 import axios, { AxiosResponse, AxiosError } from "axios"
-import React, { Context, useContext, useRef, useState, forwardRef } from "react"
+import React, { Context, useContext, useRef, useState, forwardRef, useEffect } from "react"
 import { View, useColorScheme, StyleSheet, Text, Dimensions, Vibration, TextInput } from 'react-native'
 import { UserTypes, user } from "../../App"
 import { Input, Button, ThemeProvider, createTheme, InputProps } from "@rneui/themed"
 import jwtDecode from "jwt-decode"
 import { showMessage } from 'react-native-flash-message'
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants"
+import { useAsyncStorage } from "@react-native-async-storage/async-storage"
+import NetInfo from "@react-native-community/netinfo"
+
+interface TokenInformation {
+    firstName: string, 
+    lastName: string, 
+    iat: string, 
+    id: string, 
+    role: string, 
+    companyName: string
+}
+
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />
@@ -19,10 +31,30 @@ export default function Login() {
     const loginData = useRef<{name: string, password: string}>({name: '', password: ''})
     const password = useRef<TextInput | null>(null)
 
-    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isLoading, setIsLoading] = useState(false)
 
-    function submitLogin() {
-        if ( loginData.current.name.trim().length === 0 || loginData.current.password.trim().length === 0 ) {
+    const { getItem, setItem } = useAsyncStorage('userLoginData')
+
+    function handleResponse(token: string) {
+        const d = jwtDecode(token) as TokenInformation
+        userData.companyName = d.companyName
+        userData.firstName = d.firstName
+        userData.lastName = d.lastName
+        userData.id = d.id
+        userData.isAdmin = d.role === 'admin user'
+        userData.token = token
+        userData.setIsAuthenticated(true)
+        setItem(JSON.stringify({
+          didLogOut: false,
+          token: token,
+          login: loginData.current.name.trimEnd(),
+          password: loginData.current.password
+        }))
+    }
+
+    function submitLogin(login = loginData.current.name.trim(), password = loginData.current.password) {
+        console.log(login, password)
+        if ( login.length === 0 || password.length === 0 ) {
             showMessage({
                 message: 'Empty Password Or Username Field',
                 type: 'danger'
@@ -33,18 +65,11 @@ export default function Login() {
         setIsLoading(true)
         axios.post(`${URL}/users/login`, {
             params: {
-                login: loginData.current.name.trimEnd(),
-                password: loginData.current.password
+                login: login,
+                password: password
             }
         }).then( (r: AxiosResponse) => {
-          const d = jwtDecode(r.data.data.token) as {firstName: string, lastName: string, iat: string, id: string, role: string, companyName: string}
-          userData.companyName = d.companyName
-          userData.firstName = d.firstName
-          userData.lastName = d.lastName
-          userData.id = d.id
-          userData.isAdmin = d.role === 'admin user'
-          userData.token = r.data.data.token
-          userData.setIsAuthenticated(true)
+          handleResponse(r.data.data.token)
         }).catch( (e: any) => {
             if ( e.response == undefined ) 
                 showMessage({
@@ -61,33 +86,6 @@ export default function Login() {
         .finally(() => setIsLoading(false))
     }
 
-    const style = StyleSheet.create({
-        container: {
-            flex: 1
-        },
-        text: {
-            color: isDark ? WHITE : BLACK
-        },
-        heading: {
-            backgroundColor: GREEN,
-            height: 80,
-            alignItems: 'center',
-            justifyContent: 'center'
-        },
-        headingText: {
-            color: WHITE,
-            fontSize: 25
-        },
-        form: {
-            paddingLeft: 5,
-            paddingRight: 5,
-            justifyContent: 'center',
-            alignItems: 'center',
-            flex: 1
-        },
-        input: {color: isDark ? WHITE : BLACK}
-    })
-
     const theme = createTheme({
         components: {
            Button: {
@@ -103,6 +101,20 @@ export default function Login() {
             }
         }
     })
+
+
+    useEffect(() => {
+        getItem()
+        .then((e) => {
+            if ( e == null ) return
+            const data = JSON.parse(e) as {token: string, password: string, login: string, didLogOut: boolean}
+            if ( data.didLogOut ) return
+            NetInfo.fetch().then(state => {
+                if ( !!state.isConnected ) submitLogin(data.login, data.password)
+                else handleResponse(data.token)
+              })
+        })
+    }, [])
     
 
     return(
@@ -114,12 +126,36 @@ export default function Login() {
             <View style={{flex: 1}}>
                 <View style={style.form}>
                     <ThemeProvider theme={theme}>
-                        <ForwardedInput onSubmitEditing={() => {(password.current as TextInput).focus()}} returnKeyType="next" onChangeText={ e => loginData.current.name = e} style={style.input} placeholder="Username"/>
-                        <ForwardedInput onSubmitEditing={submitLogin} ref={password} onChangeText={ e => loginData.current.password = e} style={style.input} secureTextEntry placeholder="Password"/>
-                        <Button disabled={isLoading} onPress={submitLogin} title={'LOGIN'}></Button>
+                        <ForwardedInput onSubmitEditing={() => {(password.current as TextInput).focus()}} returnKeyType="next" onChangeText={ e => loginData.current.name = e} style={{color: isDark ? WHITE : BLACK}} placeholder="Username"/>
+                        <ForwardedInput onSubmitEditing={() => submitLogin()} ref={password} onChangeText={ e => loginData.current.password = e} style={{color: isDark ? WHITE : BLACK}} secureTextEntry placeholder="Password"/>
+                        <Button disabled={isLoading} onPress={() => submitLogin()} title={'LOGIN'}></Button>
                     </ThemeProvider>
                 </View>
             </View>
         </View>
     )
 }
+
+
+const style = StyleSheet.create({
+    container: {
+        flex: 1
+    },
+    heading: {
+        backgroundColor: GREEN,
+        height: 80,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    headingText: {
+        color: WHITE,
+        fontSize: 25
+    },
+    form: {
+        paddingLeft: 5,
+        paddingRight: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1
+    }
+})

@@ -14,6 +14,7 @@ import axios, { AxiosResponse } from 'axios'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { View, Text, StyleSheet } from 'react-native'
 import LinearGradient from "react-native-linear-gradient";
+import { useAsyncStorage } from "@react-native-async-storage/async-storage";
 
 interface Chat_Update {
   users: {
@@ -35,6 +36,7 @@ interface storage {
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const isDark = useColorScheme() === 'dark'
   const userData = useContext(user as Context<UserTypes>)
+  const { setItem } = useAsyncStorage('userLoginData')
 
   function logout() {
     userData.companyName = ''
@@ -43,6 +45,9 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     userData.isAdmin = false
     userData.token = ''
     userData.setIsAuthenticated(false)
+    setItem(JSON.stringify({
+      didLogOut: true
+    }))
   }
 
   const color = isDark ? WHITE : BLACK
@@ -194,7 +199,7 @@ export default function ContentNavigation(): JSX.Element {
     >
       <Drawer.Screen name="Finances" component={Finances} />
       <Drawer.Screen name="Market" component={Market} />
-      <Drawer.Screen name="Purchase History" component={History} />
+      <Drawer.Screen name="History" component={History} />
       <Drawer.Screen name="Chat" component={Chat} />
       <Drawer.Screen name="Cart" component={Cart} />
     </Drawer.Navigator>

@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput} from 'react-native'
+import { KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput, BackHandler } from 'react-native'
 import React, { Context, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, RED, URL, WHITE } from '../constants/constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
@@ -112,7 +112,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
 
     const scrollDown = useCallback( ()=> {
         (content.current as ScrollView).scrollToEnd()
-    }, [])
+    }, [content.current])
 
 
     function startRecording() {
@@ -137,7 +137,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
             } else {
                 setMessages([])
             }
-
+            content.current?.scrollToEnd()
         } catch(e: any) {
             console.log('Error loading data from async storage')
             console.log(e)
@@ -153,6 +153,8 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         isOpenChat ? openChat() : closeChat()
     }, [isOpenChat])
 
+
+    //load previous chat messages
     useEffect(() => {
         (ws.server as WebSocket).onmessage = (e) => {
             const message = JSON.parse(e.data) as message
@@ -180,6 +182,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         })
     }, [ws.server, userID, audio.current, userData.id])
 
+    //show previous chat messages
     useEffect(() => {
         showHistory()
 

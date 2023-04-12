@@ -8,6 +8,7 @@ import SelectDropdown from "react-native-select-dropdown"
 import { showMessage } from 'react-native-flash-message'
 import { BLACK, WHITE, GREEN, URL } from "../constants/constants"
 import jwtDecode from "jwt-decode"
+import { useAsyncStorage } from "@react-native-async-storage/async-storage"
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />
@@ -33,6 +34,7 @@ export default function CreateAccount() {
     const [isLoading, setIsLoading] = useState(false)
     const [height, setHeight] = useState(Dimensions.get('window').height)
 
+
     const lastName = useRef<TextInput | null>(null)
     const password = useRef<TextInput | null>(null)
     const confirmPassword = useRef<TextInput | null>(null)
@@ -46,13 +48,13 @@ export default function CreateAccount() {
         companyName: ''
     })
 
+    const { setItem } = useAsyncStorage('userLoginData')
+
     function areValidValues(obj: any) {
         return (Object.values(obj) as string[]).every(
           (e) => e.trim().length > 0
         )
     }
-
-
     
 
     useEffect(() => {
@@ -102,7 +104,7 @@ export default function CreateAccount() {
                 lastName: accData.current.lastName,
                 company: accData.current.companyName,
                 password: accData.current.password,
-                login: accData.current.username.trimEnd()
+                login: accData.current.username.trim()
             }
         })
         .then( (r: AxiosResponse) => {
@@ -114,6 +116,12 @@ export default function CreateAccount() {
             userData.isAdmin = response.role === 'admin user'
             userData.token = r.data.data.token
             userData.setIsAuthenticated(true)
+            setItem(JSON.stringify({
+                didLogOut: false,
+                token: r.data.data.token,
+                login: accData.current.username.trimEnd(),
+                password: accData.current.password
+            }))
         })
         .catch( (e: any) => {
             console.log(e)
