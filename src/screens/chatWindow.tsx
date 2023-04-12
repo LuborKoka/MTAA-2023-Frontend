@@ -26,6 +26,7 @@ interface message {
     type: string,
     data: {
         from: string,
+        to: string,
         content: string
     }
 }
@@ -164,14 +165,20 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                     audio.current.play()
                     setTimeout(() => audio.current.stop(), 1000)
                 }
-                else setIncomingMessageFromAnotherUser(message.data.from, userData.id, message.data.content)
+                else if ( message.data.to === userID ) {
+                    history.current.push({isIncoming: false, content: message.data.content})
+                    setMessages((prevMessages) => [
+                        ...prevMessages, <Message key={v4()} content={message.data.content} />
+                    ])
+                }
+                else setMessageWithAnotherUser(message.data.from, message.data.to, message.data.content, userData.id)
             }
         }
 
         return (() => {
             (ws.server as WebSocket).onmessage = null
         })
-    }, [ws.server, userID, audio.current])
+    }, [ws.server, userID, audio.current, userData.id])
 
     useEffect(() => {
         showHistory()
@@ -267,16 +274,17 @@ const style = StyleSheet.create({
 
 
 
-async function setIncomingMessageFromAnotherUser(from: string, me: string, content: string) {
+async function setMessageWithAnotherUser(from: string, to: string, content: string, myID: string) {
+    const isIncoming = myID === to
     try {
-        const d = await AsyncStorage.getItem(`me_${me}_with_${from}`)
+        const d = await AsyncStorage.getItem(`me_${myID}_with_${isIncoming ? from : to}`)
         if ( d !== null ) {
             const data = JSON.parse(d) as storage
-            data.messages.push({isIncoming: true, content: content})
-            AsyncStorage.setItem(`me_${me}_with_${from}`, JSON.stringify(data))
+            data.messages.push({isIncoming: isIncoming, content: content})
+            AsyncStorage.setItem(`me_${myID}_with_${isIncoming ? from : to}`, JSON.stringify(data))
         } else {
-            const data: storage = {messages: [{isIncoming: true, content: content}]}
-            AsyncStorage.setItem(`me_${me}_with_${from}`, JSON.stringify(data))
+            const data: storage = {messages: [{isIncoming: isIncoming, content: content}]}
+            AsyncStorage.setItem(`me_${myID}_with_${isIncoming ? from : to}`, JSON.stringify(data))
         }
 
     } catch(e: any) {
