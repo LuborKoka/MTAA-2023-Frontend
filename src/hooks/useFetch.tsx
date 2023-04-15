@@ -17,7 +17,6 @@ export default function useFetch<t> (url: string, asyncStorageURL:string ): [t |
     const { getItem, setItem } = useAsyncStorage(asyncStorageURL)
 
     async function fetchOnline() {
-        setIsLoading(true)
         try {
             const r = await axios.get(`${url.includes(URL) ? '' : URL}${url}`, {
                 headers: {
@@ -71,6 +70,7 @@ export default function useFetch<t> (url: string, asyncStorageURL:string ): [t |
         let wasOnline = false
         const unsubscribe = NetInfo.addEventListener(state => {
             if ( state.isConnected && state.isInternetReachable ) {
+                setIsLoading(true)
                 setTimeout( ()=> fetchOnline(), 1000)
                 wasOnline = true
             }
