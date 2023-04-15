@@ -30,7 +30,6 @@ export default function useFetch<t> (url: string, asyncStorageURL:string ): [t |
             setItem(JSON.stringify(data))
         }
         catch(e: any) {
-            console.log(e)
             if ( e.response == undefined ) 
                 showMessage({
                 message: 'Network Error',
@@ -41,9 +40,6 @@ export default function useFetch<t> (url: string, asyncStorageURL:string ): [t |
                 message: e.response?.data.message,
                 type: 'danger'
             })
-
-            console.log(e.response)
-
         }
         finally {
             setIsLoading(false)
