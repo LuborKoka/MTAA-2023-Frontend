@@ -154,7 +154,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [isOpenChat])
 
 
-    //load previous chat messages
+    //listen for messages
     useEffect(() => {
         (ws.server as WebSocket).onmessage = (e) => {
             const message = JSON.parse(e.data) as message

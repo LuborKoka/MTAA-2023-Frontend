@@ -1,17 +1,16 @@
-import { useColorScheme, StyleSheet, Image, ScrollView, View, Dimensions, useWindowDimensions } from 'react-native'
-import React, { Context, useContext, useEffect, useState, useRef } from 'react'
+import { useColorScheme, StyleSheet, Text, ScrollView, View, Dimensions, useWindowDimensions } from 'react-native'
+import React, { Context, useContext, useEffect, useState } from 'react'
 import { UserTypes, user } from '../../App'
-import axios, { AxiosError, AxiosResponse} from 'axios'
-import { BLACK, URL, WHITE } from '../constants/constants'
-import { showMessage } from 'react-native-flash-message'
+import { BLACK, WHITE } from '../constants/constants'
 import ChatWindow from './chatWindow'
 import Route from '../subComponents/Route'
-import { useAsyncStorage } from '@react-native-async-storage/async-storage'
-import NetInfo from "@react-native-community/netinfo"
 import Loader from 'react-native-spinkit'
+import useFetch from '../hooks/useFetch'
+import Icon from 'react-native-vector-icons/Entypo'
 
 
 interface response {
+    token?: string,
     users: {
         userID: string,
         firstName: string,
@@ -35,67 +34,31 @@ export default function Chat() {
 
     const [router, setRouter] = useState<JSX.Element[]>([])
     const [isOpenChat, setIsOpenChat] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
     const [chatData, setChatData] = useState<data>({firstName: '', lastName: '', userID: '', companyName: ''})
-
-    const isUpToDate = useRef(false)
 
     const userData = useContext(user as Context<UserTypes>)
 
     const { height } = useWindowDimensions()
 
-    const { getItem, setItem } = useAsyncStorage(`user_${userData.id}_chat`)
+    const [data, isLoading, isError] = useFetch<response>('/chat/init', `user_${userData.id}_chat`)
 
-    async function fetchData(isConnected: boolean) {
-        if ( isUpToDate.current ) return
-        if ( isConnected ) {
-            setIsLoading(true)
-            axios.get(`${URL}/chat/init?userID=${userData.id}`, {
-                headers: {
-                    Authorization: `Bearer ${userData.token}`
-                }
-            })
-            .then( (r: AxiosResponse) => {
-                setRouter( (r.data as response).users.map( e => {
-                    return <Route firstName={e.firstName} lastName={e.lastName} userID={e.userID} companyName={e.companyName} setChatData={setChatData} setIsChatOpen={setIsOpenChat} key={e.userID} />
-                }))
-                setItem(JSON.stringify(r.data))
-            })
-            .catch( (e: any) => {
-                if ( e.response == undefined ) 
-                    showMessage({
-                    message: 'Network Error',
-                    type: 'warning'
-                    })
-                else if (e instanceof AxiosError) 
-                    showMessage({
-                    message: e.response?.data.message,
-                    type: 'danger'
-                    })
-            })
-            .finally(() => setIsLoading(false))
-            return
+
+    const error = (
+        <View style={{alignItems: 'center', justifyContent: 'center', paddingTop: '50%', gap: 50}} key={'1'} >
+            <Icon name="emoji-sad" style={{color: isDark ? WHITE : BLACK, fontSize: 150}} />
+            <Text style={{fontWeight: 'bold', color: isDark ? WHITE : BLACK}}>Error Loading Content</Text>
+        </View>
+    )
+
+    useEffect(() => {
+        if ( !isError && data != undefined ) {
+            setRouter( data.users.map( e => 
+                <Route {...e} setChatData={setChatData} setIsChatOpen={setIsOpenChat} key={e.userID} />    
+            ))
         }
-        setIsLoading(true)
-        getItem()
-        .then(d => {
-            if ( d == null ) return
-            const data = JSON.parse(d) as response
-            setRouter( data.users.map( e => {
-                return <Route firstName={e.firstName} lastName={e.lastName} userID={e.userID} companyName={e.companyName} setChatData={setChatData} setIsChatOpen={setIsOpenChat} key={e.userID} />
-            }))
-        })
-        .finally(() => setIsLoading(false))
+        else setRouter([error])
+    }, [data, isError, isDark])
 
-    }
-    
-    useEffect( () => {
-        const unsubscribe = NetInfo.addEventListener(state => {
-            fetchData(!!state.isConnected)
-        })   
-
-        return( ()=> unsubscribe())
-    }, [])
 
     const loader = (
         <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', height: height - 100, backgroundColor: isDark ? BLACK : WHITE}}>

@@ -1,17 +1,15 @@
 import { ScrollView, View, Text, useColorScheme, StyleSheet, Dimensions, useWindowDimensions } from 'react-native'
-import React, { Context, useContext, useEffect, useState, useRef } from 'react'
-import { BLACK, RED, URL, WHITE } from '../constants/constants'
+import React, { Context, useContext, useEffect, useState } from 'react'
+import { BLACK, RED, WHITE } from '../constants/constants'
 import { UserTypes, user } from '../../App'
-import axios, { AxiosError, AxiosResponse } from 'axios'
-import { showMessage } from 'react-native-flash-message'
 import Item from '../subComponents/historyItem'
 import Icon from 'react-native-vector-icons/FontAwesome'
-import { useAsyncStorage } from "@react-native-async-storage/async-storage"
-import NetInfo from "@react-native-community/netinfo"
 import Loader from 'react-native-spinkit'
-
+import useFetch from '../hooks/useFetch'
+import EIcon from 'react-native-vector-icons/Entypo'
 
 interface response {
+  token?: string,
   payments: {
     total: number,
     invoiceID: string,
@@ -25,70 +23,27 @@ export default function History() {
 
   const [items, setItems] = useState<JSX.Element[]>([])
   const [pdf, setPdf] = useState<JSX.Element | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-
-  const isUpToDate = useRef(false)
 
   const userData = useContext(user as Context<UserTypes>)
 
   const { height } = useWindowDimensions()
-  
-  const { getItem, setItem } = useAsyncStorage(`user_${userData.id}_history`)
 
+  const [data, isLoading, isError] = useFetch<response>('/init/invoices', `user_${userData.id}_history`)
 
-  async function fetchData(isConnected: boolean) {
-    if ( isUpToDate.current ) return
-    if ( isConnected ) { 
-      setIsLoading(true)
-      axios.get(`${URL}/init/invoices/${userData.companyName}`, {
-        headers: {
-          Authorization: `Bearer ${userData.token}`
-        }
-      })
-      .then( (r: AxiosResponse) => {
-        setItems((r.data as response).payments.map( (p, i) => 
-          <Item token={userData.token} invoiceID={p.invoiceID} date={p.paidAt} amount={p.total} setPdf={setPdf} key={`${p.invoiceID}${i}`}/>
-        ))
-        setItem(JSON.stringify(r.data))
-        isUpToDate.current = true
-      })
-      .catch((e: any) => {
-        if (e instanceof AxiosError) 
-          showMessage({
-            message: e.response?.data.message,
-            type: 'danger'
-          })
-        if ( e.response == undefined ) 
-          showMessage({
-            message: 'Network Error',
-            type: 'warning'
-          })
-      })
-      .finally(() => setIsLoading(false))
-      return
-    }
+  const error = (
+    <View style={{alignItems: 'center', justifyContent: 'center', paddingTop: '50%', gap: 50}} key={'1'} >
+        <EIcon name="emoji-sad" style={{color: isDark ? WHITE : BLACK, fontSize: 150}} />
+        <Text style={{fontWeight: 'bold', color: isDark ? WHITE : BLACK}}>Error Loading Content</Text>
+    </View>
+)
 
-    setIsLoading(true)
-    getItem()
-    .then( d => {
-      if ( d == null ) return
-      const data = JSON.parse(d) as response
-      setItems(data.payments.map( (p, i) => 
-        <Item token={userData.token} invoiceID={p.invoiceID} date={p.paidAt} amount={p.total} setPdf={setPdf} key={`${p.invoiceID}${i}`}/>
+  useEffect(() => {
+    if ( !isError && data != undefined ) {
+      setItems( data.payments.map( e => 
+        <Item token={userData.token} {...e} setPdf={setPdf} key={e.invoiceID} />  
       ))
-    })
-    .finally(() => setIsLoading(false))
-
-  }
-
-
-  useEffect( () => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-        fetchData(!!state.isConnected)
-    })   
-
-    return( ()=> unsubscribe())
-  }, [])
+    }
+  }, [data, isError])
 
   const loader = (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', height: height - 100, backgroundColor: isDark ? BLACK : WHITE}}>
@@ -115,14 +70,16 @@ export default function History() {
     </ScrollView>
   )
 
-  return (
+  const validContent = (
     pdf == null ?
-      isLoading 
-      ?
-        loader
-      : 
-        content
-      : pdf
+      isLoading ?
+        loader : 
+        content :
+      pdf
+    )
+
+  return (
+    isError ? error : validContent
   )
 }
 

@@ -115,13 +115,11 @@ export default function CreateAccount() {
             userData.id = response.id
             userData.isAdmin = response.role === 'admin user'
             userData.token = r.data.data.token
-            userData.setIsAuthenticated(true)
             setItem(JSON.stringify({
                 didLogOut: false,
-                token: r.data.data.token,
-                login: accData.current.username.trimEnd(),
-                password: accData.current.password
+                token: r.data.data.token
             }))
+            userData.setIsAuthenticated(true)
         })
         .catch( (e: any) => {
             console.log(e)

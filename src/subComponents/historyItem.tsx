@@ -15,13 +15,13 @@ import Loader from 'react-native-spinkit'
 interface itemProps {
   token: string,
   invoiceID: string,
-  date: string,
-  amount: number,
+  paidAt: string,
+  total: number,
   setPdf: React.Dispatch<React.SetStateAction<JSX.Element | null>>
 }
 
   
-function Item({ token, invoiceID, date, amount, setPdf }: itemProps) {
+function Item({ token, invoiceID, paidAt, total, setPdf }: itemProps) {
   const isDark = useColorScheme() === 'dark'
 
   const [isDownloaded, setIsDownloaded] = useState(false)
@@ -55,6 +55,11 @@ function Item({ token, invoiceID, date, amount, setPdf }: itemProps) {
             Authorization: `Bearer ${token}`,
         })
 
+        if ( response.info().status !== 200 ) {
+          fs.unlink(response.path())
+          throw new Error(response.info().status.toString())
+        }
+
         filePath.current = response.path()
         showMessage({
           message: 'Download Complete',
@@ -62,8 +67,21 @@ function Item({ token, invoiceID, date, amount, setPdf }: itemProps) {
         })
         setIsDownloaded(true)
     } catch (e: any) {
+        let status
+        switch (e) {
+          case '401':
+            status = 'Unauthorized'
+            break
+          case '500':
+            status = 'Server Error'
+            break
+          default:
+            status = 'Network Error'
+            break
+        }
         showMessage({
-            message: 'Download Failed'
+            message: `Download Failed: ${status}`,
+            type: 'danger'
         })
         setIsDownloaded(false)
     }
@@ -98,8 +116,8 @@ function Item({ token, invoiceID, date, amount, setPdf }: itemProps) {
 
   return (
     <View style={{...style.paymentHeader, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: isDark ? WHITE : BLACK, borderStyle: 'dashed'}}>
-        <Text style={{color: isDark ? WHITE : BLACK, width: (Dimensions.get('window').width-40) * .40}}>{date}</Text>
-        <Text style={{color: isDark ? WHITE : BLACK, width: (Dimensions.get('window').width-40) * .35}}>{formatNumber(amount)}</Text>
+        <Text style={{color: isDark ? WHITE : BLACK, width: (Dimensions.get('window').width-40) * .40}}>{paidAt}</Text>
+        <Text style={{color: isDark ? WHITE : BLACK, width: (Dimensions.get('window').width-40) * .35}}>{formatNumber(total)}</Text>
         <TouchableOpacity style={{width: (Dimensions.get('window').width-40) * .10, justifyContent: 'center', flexDirection: 'row'}} onPress={isDownloaded ? displayPDF : download}>
           { isDownloaded ?
           <ADIcon name='pdffile1' style={{color: isDark ? WHITE : BLACK, fontSize: 24}}  /> :

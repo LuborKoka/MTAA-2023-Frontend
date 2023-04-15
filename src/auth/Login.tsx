@@ -35,7 +35,7 @@ export default function Login() {
 
     const { getItem, setItem } = useAsyncStorage('userLoginData')
 
-    function handleResponse(token: string) {
+    function setUserData(token: string) {
         const d = jwtDecode(token) as TokenInformation
         userData.companyName = d.companyName
         userData.firstName = d.firstName
@@ -44,16 +44,9 @@ export default function Login() {
         userData.isAdmin = d.role === 'admin user'
         userData.token = token
         userData.setIsAuthenticated(true)
-        setItem(JSON.stringify({
-          didLogOut: false,
-          token: token,
-          login: loginData.current.name.trimEnd(),
-          password: loginData.current.password
-        }))
     }
 
     function submitLogin(login = loginData.current.name.trim(), password = loginData.current.password) {
-        console.log(login, password)
         if ( login.length === 0 || password.length === 0 ) {
             showMessage({
                 message: 'Empty Password Or Username Field',
@@ -69,7 +62,11 @@ export default function Login() {
                 password: password
             }
         }).then( (r: AxiosResponse) => {
-          handleResponse(r.data.data.token)
+            setItem(JSON.stringify({
+                didLogOut: false,
+                token: r.data.data.token
+            }))
+            setUserData(r.data.data.token)
         }).catch( (e: any) => {
             if ( e.response == undefined ) 
                 showMessage({
@@ -107,12 +104,9 @@ export default function Login() {
         getItem()
         .then((e) => {
             if ( e == null ) return
-            const data = JSON.parse(e) as {token: string, password: string, login: string, didLogOut: boolean}
+            const data = JSON.parse(e) as {token: string, didLogOut: boolean}
             if ( data.didLogOut ) return
-            NetInfo.fetch().then(state => {
-                if ( !!state.isConnected ) submitLogin(data.login, data.password)
-                else handleResponse(data.token)
-              })
+            setUserData(data.token)
         })
     }, [])
     

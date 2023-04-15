@@ -9,12 +9,12 @@ import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants";
 import Chat from "../screens/Chat";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage, { useAsyncStorage } from "@react-native-async-storage/async-storage";
 import axios, { AxiosResponse } from 'axios'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { View, Text, StyleSheet } from 'react-native'
 import LinearGradient from "react-native-linear-gradient";
-import { useAsyncStorage } from "@react-native-async-storage/async-storage";
+import NetInfo from '@react-native-community/netinfo'
 
 interface Chat_Update {
   users: {
@@ -117,16 +117,21 @@ export default function ContentNavigation(): JSX.Element {
 
   const Drawer = createDrawerNavigator()
 
+  const { getItem, setItem } = useAsyncStorage(`lastOnline_${userData.id}`)
+
+  //nove poslane/prijate spravy, odkedy bol user naposledy online
   const getHistory = useCallback( async () => {
     let time: string | null = null
     try {
-        time = await AsyncStorage.getItem(`lastOnline_${userData.id}`)
+        time = await getItem()
     } catch (e: any) {
         console.log(e)
+        fetchedOnceOnConnectionStateChange = true
+        return
     }
 
     try {
-        const r: AxiosResponse = await axios.get(`${URL}/chat/update/${userData.id}${time == null ? '' : `?time=${time}`}`, {
+        const r: AxiosResponse = await axios.get(`${URL}/chat/update${time == null ? '' : `?time=${time}`}`, {
             headers: {
                 Authorization: `Bearer ${userData.token}`
             }
@@ -154,18 +159,34 @@ export default function ContentNavigation(): JSX.Element {
         console.log(e)
     }
     finally {
-      AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
+      setItem(new Date().toISOString())
+      fetchedOnceOnConnectionStateChange = true
     }
-  }, [userData.id, AsyncStorage])
+    
+  }, [])
 
-  //tymto padom ten dalsi effect by mal byt zbytocny, ak toto teda bude fungovat
-  useEffect(() => {
-    getHistory()
-  }, [userData.id, getHistory])
+
+  
+  let fetchedOnceOnConnectionStateChange = true
+  
+  useEffect( () => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if ( state.isConnected && state.isInternetReachable && fetchedOnceOnConnectionStateChange) {
+          getHistory()
+          fetchedOnceOnConnectionStateChange = false
+      }
+
+      if ( !state.isInternetReachable ) {
+        setItem(new Date().toISOString())
+      }
+    })    
+
+    return( ()=> unsubscribe())
+}, [getHistory])
 
   useEffect(() => {
     ws.server = new WebSocket(URL)
-    AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
+    setItem(new Date().toISOString())
     ws.server.onopen = () => {
       const user = {type: 'USER_ID', data: userData.id};
       (ws.server as WebSocket).send(JSON.stringify(user))
@@ -177,7 +198,7 @@ export default function ContentNavigation(): JSX.Element {
       userData.id = '';
       (ws.server as WebSocket).send(logout);
       (ws.server as WebSocket).close(1000, 'Logout')
-      AsyncStorage.setItem(`lastOnline_${userData.id}`, new Date().toISOString())
+      setItem(new Date().toISOString())
     })
     
   }, [])
