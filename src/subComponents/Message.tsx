@@ -5,10 +5,11 @@ import emojiRegex from "emoji-regex"
 
 interface messageProps {
     isIncoming?: boolean,
-    content: string
+    content: string,
+    isSent?: boolean
 }
 
-export default function Message({ isIncoming = false, content }: messageProps) {
+export default function Message({ isIncoming = false, content, isSent = true }: messageProps) {
     const isDark = useColorScheme() === 'dark'
 
     function findEmoji(content: string) {
@@ -44,7 +45,8 @@ export default function Message({ isIncoming = false, content }: messageProps) {
         },
         container: {
             justifyContent: isIncoming ? 'flex-start' : 'flex-end', 
-            flexDirection: 'row'
+            flexDirection: 'row',
+            opacity: isSent ? 1 : .5
         }
     })
     return(

@@ -7,10 +7,14 @@ import NetInfo from '@react-native-community/netinfo'
 import axios from "axios";
 import { URL } from "./src/constants/constants";
 import { useAsyncStorage } from "@react-native-async-storage/async-storage";
+import { PermissionsAndroid } from 'react-native'
+import messaging from '@react-native-firebase/messaging'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface ServerTypes {
   server: WebSocket | null
 }
+
 
 export interface UserTypes {
   token: string,
@@ -20,6 +24,13 @@ export interface UserTypes {
   id: string,
   isAdmin: boolean,
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+interface storage {
+  messages: {
+      isIncoming: boolean,
+      content: string
+  }[]
 }
 
 export const user = createContext<UserTypes | null>(null)
@@ -94,22 +105,50 @@ function App(): JSX.Element {
     return( ()=> unsubscribe())
   }, [])
 
-  return(
-    <serverContext.Provider value={server.current}>
-      <user.Provider value={userData.current}>
-        { !isAuthenticated ? <Auth /> :
-          <NavigationContainer>
-              <ContentNavigation />
-          </NavigationContainer> 
-        }
+  useEffect(() => {
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
 
-        <FlashMessage position={'top'} duration={2500} style={{alignItems: 'center', justifyContent: 'center'}} />
-      </user.Provider>
-    </serverContext.Provider>    
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      //console.log(remoteMessage)
+      //ukazalo sa, ze nakoniec nemam v plane s tymto nic robit, ale pokial velmi chces, mozes si to upravit
+    })
+  
+    return(() => unsubscribe())
+  }, [])
+
+  return(
+    <user.Provider value={userData.current}>
+      { !isAuthenticated ? <Auth /> :
+        <NavigationContainer>
+            <ContentNavigation />
+        </NavigationContainer> 
+      }
+
+      <FlashMessage position={'top'} duration={2500} style={{alignItems: 'center', justifyContent: 'center'}} />
+    </user.Provider>
   )
 }
 
 export default App
 
 
+
+async function setMessageWithAnotherUser(from: string, to: string, content: string, myID: string) {
+  const isIncoming = myID === to
+  try {
+      const d = await AsyncStorage.getItem(`me_${myID}_with_${isIncoming ? from : to}`)
+      if ( d !== null ) {
+          const data = JSON.parse(d) as storage
+          data.messages.push({isIncoming: isIncoming, content: content})
+          AsyncStorage.setItem(`me_${myID}_with_${isIncoming ? from : to}`, JSON.stringify(data))
+      } else {
+          const data: storage = {messages: [{isIncoming: isIncoming, content: content}]}
+          AsyncStorage.setItem(`me_${myID}_with_${isIncoming ? from : to}`, JSON.stringify(data))
+      }
+
+  } catch(e: any) {
+      console.log(e)
+      console.log('Error in storing the received message')
+  }
+}
 

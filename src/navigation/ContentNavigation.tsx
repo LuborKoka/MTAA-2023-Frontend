@@ -4,7 +4,7 @@ import Finances from "../screens/Finances";
 import Market from "../screens/Market";
 import History from "../screens/History";
 import { ServerTypes, UserTypes, serverContext, user } from "../../App";
-import { useColorScheme } from "react-native";
+import { useColorScheme, Alert } from "react-native";
 import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants";
@@ -15,6 +15,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { View, Text, StyleSheet } from 'react-native'
 import LinearGradient from "react-native-linear-gradient";
 import NetInfo from '@react-native-community/netinfo'
+import { useNotification } from "../hooks/useNotification";
+import { AsyncStorageHook } from "@react-native-async-storage/async-storage/lib/typescript/types";
+
 
 interface Chat_Update {
   users: {
@@ -113,7 +116,6 @@ export default function ContentNavigation(): JSX.Element {
   const isDark = useColorScheme() === "dark"
 
   const userData = useContext(user as Context<UserTypes>)
-  const ws = useContext(serverContext as Context<ServerTypes>)
 
   const Drawer = createDrawerNavigator()
 
@@ -129,6 +131,8 @@ export default function ContentNavigation(): JSX.Element {
         fetchedOnceOnConnectionStateChange = true
         return
     }
+    
+    await new Promise(r => setTimeout(r as any, 1000))
 
     try {
         const r: AxiosResponse = await axios.get(`${URL}/chat/update${time == null ? '' : `?time=${time}`}`, {
@@ -165,7 +169,6 @@ export default function ContentNavigation(): JSX.Element {
     
   }, [])
 
-
   
   let fetchedOnceOnConnectionStateChange = true
   
@@ -184,28 +187,10 @@ export default function ContentNavigation(): JSX.Element {
     return( ()=> unsubscribe())
 }, [getHistory])
 
-  useEffect(() => {
-    ws.server = new WebSocket(URL)
-    setItem(new Date().toISOString())
-    ws.server.onopen = () => {
-      const user = {type: 'USER_ID', data: userData.id};
-      (ws.server as WebSocket).send(JSON.stringify(user))
-    }
-
-    return( () => {
-      const logout = JSON.stringify({type: 'LOGOUT', data: userData.id})
-      
-      userData.id = '';
-      (ws.server as WebSocket).send(logout);
-      (ws.server as WebSocket).close(1000, 'Logout')
-      setItem(new Date().toISOString())
-    })
-    
-  }, [])
 
   return (
     <Drawer.Navigator
-      initialRouteName="Finances"
+      initialRouteName="Chat"
       screenOptions={({ navigation }) => ({
         headerStyle: {
           backgroundColor: GREEN

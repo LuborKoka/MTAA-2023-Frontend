@@ -80,7 +80,7 @@ export default function Chat() {
                     </ScrollView>
                     <ChatWindow setIsOpenChat={setIsOpenChat} {...chatData} isOpenChat={isOpenChat} />  
                 </>
-        }        
+        }   
         </>   
     )
 }

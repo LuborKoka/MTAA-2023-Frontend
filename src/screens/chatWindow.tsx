@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput, BackHandler } from 'react-native'
+import { AppState, KeyboardAvoidingView, View, Text, StyleSheet, useColorScheme, Dimensions, Animated, TouchableOpacity, ScrollView, TextInput, BackHandler } from 'react-native'
 import React, { Context, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { BLACK, DARKER_WHITE, GREEN, LIGHTER_BLACK, RED, URL, WHITE } from '../constants/constants'
 import Icon from 'react-native-vector-icons/FontAwesome5'
@@ -7,10 +7,13 @@ import FAIcon from 'react-native-vector-icons/FontAwesome'
 import Message from '../subComponents/Message'
 import 'react-native-get-random-values'
 import { v4 } from 'uuid';
-import { ServerTypes, UserTypes, serverContext, user } from '../../App'
+import { UserTypes, user } from '../../App'
 import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
 //src: https://pixabay.com/sound-effects/search/messaging/
 import Sound from 'react-native-sound'
+import NetInfo from '@react-native-community/netinfo'
+import { AsyncStorageHook } from '@react-native-async-storage/async-storage/lib/typescript/types'
+import { useNotification } from '../hooks/useNotification'
 
 
 interface props {
@@ -44,8 +47,8 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     const isDark = useColorScheme() === 'dark'
 
     const userData = useContext(user as Context<UserTypes>)
-    const ws = useContext(serverContext as Context<ServerTypes>)
 
+    const isBackground = useRef(true)
     const [messages, setMessages] = useState<JSX.Element[]>([])
     const [isRecording, setIsRecording] = useState(false)
 
@@ -53,6 +56,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     const content = useRef<ScrollView | null>(null)
 
     const input = useRef('')
+    const ws = useRef<WebSocket | null>(null)
     const audio = useRef(new Sound('new_message.mp3', Sound.MAIN_BUNDLE, (error) => {
         if (error) {
           console.log('Failed to load the sound', error)
@@ -64,6 +68,10 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     const history = useRef<storage['messages']>([])
 
     const { getItem, setItem } = useAsyncStorage(`me_${userData.id}_with_${userID}`)
+    const offline = useAsyncStorage(`offline_messages`)
+    const lastOnline = useAsyncStorage(`lastOnline_${userData.id}`)
+
+    const token = useNotification()
 
     const bgColor = isDark ? LIGHTER_BLACK : DARKER_WHITE
     const txtColor = isDark ? WHITE : BLACK
@@ -91,10 +99,21 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
       
     
       
-    function pushNewMessage() {
-        if (ws.server == null ) return
+    async function pushNewMessage() {
+        if (ws.current == null ) return
         const content = input.current.trim()
         if ( content === '' ) return
+
+        const state = await NetInfo.fetch()
+
+        if ( !state.isConnected && !state.isInternetReachable ) {
+            sendOffline(content, userData.id, userID, offline)
+            setMessages(p => [...p, <Message key={v4()} content={content} isSent={false} />]);
+            (inputComponent.current as TextInput).clear()
+            input.current = ''
+            return
+        }
+
         const message = JSON.stringify({
             type: 'MESSAGE',
             data: {
@@ -106,13 +125,13 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
         setMessages(p => [...p, <Message key={v4()} content={content} />]);
         (inputComponent.current as TextInput).clear()
         input.current = ''
-        ws.server.send(message)
+        ws.current.send(message)
         history.current.push({isIncoming: false, content: content})
     }
 
     const scrollDown = useCallback( ()=> {
-        (content.current as ScrollView).scrollToEnd()
-    }, [content.current])
+        content.current?.scrollToEnd()
+    }, [])
 
 
     function startRecording() {
@@ -145,8 +164,25 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [userID, userData.id, setMessages])
 
 
+    async function connectToWebSocketServer() {
+        ws.current = new WebSocket(URL)
+        lastOnline.setItem(new Date().toISOString())
+        ws.current.onopen = () => {
+          const user = {type: 'LOGIN', data: {
+            userID: userData.id,
+            token: token,
+            name: `${userData.firstName} ${userData.lastName}`
+          }}
+          ws.current!.send(JSON.stringify(user))
+    
+          setTimeout(() => once = true, 200)
+    
+          setTimeout(() => sendOfflineMessages(ws.current!, offline), 200)
+        }
+    }
+
     useEffect(() => {
-        scrollDown()
+        setTimeout(() => scrollDown(), 100)
     }, [messages, scrollDown])
 
     useEffect(() => {
@@ -154,9 +190,36 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
     }, [isOpenChat])
 
 
+    let once = true
     //listen for messages
     useEffect(() => {
-        (ws.server as WebSocket).onmessage = (e) => {
+        if ( token == undefined ) return
+        const unsubscribe = NetInfo.addEventListener(state => {
+            if ( state.isConnected && state.isInternetReachable && once ) {
+                once = false
+                setTimeout(() => connectToWebSocketServer(), 100)
+            }
+            showHistory()
+        })
+
+        return( () => {
+            unsubscribe()
+            const logout = JSON.stringify({type: 'LOGOUT', data: userData.id})
+            
+            userData.id = ''
+            ws.current!.send(logout)
+            ws.current!.close(1000, 'Logout')
+            lastOnline.setItem(new Date().toISOString())
+          })
+    
+    }, [token])
+
+    //show previous chat messages
+    useEffect(() => {  
+        if ( ws.current == null ) return
+        showHistory()
+        
+        ws.current.onmessage = e => {
             const message = JSON.parse(e.data) as message
             if (message.type === 'MESSAGE') {
                 if ( message.data.from === userID ) {
@@ -164,8 +227,11 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                     setMessages((prevMessages) => [
                         ...prevMessages, <Message key={v4()} content={message.data.content} isIncoming />
                     ])
-                    audio.current.play()
-                    setTimeout(() => audio.current.stop(), 1000)
+                    if ( isBackground.current ) {
+                        audio.current.play()
+                        setTimeout(() => audio.current.stop(), 1000)
+                    }
+                    
                 }
                 else if ( message.data.to === userID ) {
                     history.current.push({isIncoming: false, content: message.data.content})
@@ -177,15 +243,6 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
             }
         }
 
-        return (() => {
-            (ws.server as WebSocket).onmessage = null
-        })
-    }, [ws.server, userID, audio.current, userData.id])
-
-    //show previous chat messages
-    useEffect(() => {
-        showHistory()
-
         return( () => {
             if ( history.current.length > 0 ) {
                 const d = JSON.stringify({messages: history.current} as storage)
@@ -195,6 +252,19 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
             //AsyncStorage.clear()
         })  
     }, [showHistory, userID])
+
+    useEffect(() => {
+        function checkAppState() {
+            const state = AppState.currentState
+
+            if ( state === 'active' ) isBackground.current = false
+            else isBackground.current = true
+        }
+
+        const subscribe = AppState.addEventListener('change', checkAppState)
+
+        return(() => subscribe.remove())
+    }, [])
 
     return (
         <Animated.View style={{...style.animatedContainer, transform: [{translateX: translateX}]}}>
@@ -275,8 +345,6 @@ const style = StyleSheet.create({
 })
 
 
-
-
 async function setMessageWithAnotherUser(from: string, to: string, content: string, myID: string) {
     const isIncoming = myID === to
     try {
@@ -289,9 +357,79 @@ async function setMessageWithAnotherUser(from: string, to: string, content: stri
             const data: storage = {messages: [{isIncoming: isIncoming, content: content}]}
             AsyncStorage.setItem(`me_${myID}_with_${isIncoming ? from : to}`, JSON.stringify(data))
         }
-
+  
     } catch(e: any) {
         console.log(e)
         console.log('Error in storing the received message')
     }
+  }
+
+
+
+async function sendOffline(content: string, from: string, to: string, storage: AsyncStorageHook) {
+    const unsent = await storage.getItem()
+
+    type message = {
+        from: string,
+        to: string,
+        content: string
+    }
+
+    if ( unsent == null ) {
+        await storage.setItem(JSON.stringify([{
+            from: from,
+            to: to,
+            content: content
+        }]))
+        return
+    }
+
+    const messages = JSON.parse(unsent) as message[]
+
+    messages.push({
+        from: from,
+        to: to,
+        content: content
+    })
+
+    storage.setItem(JSON.stringify(messages))
 }
+
+
+
+
+
+
+  async function sendOfflineMessages(ws: WebSocket, storage: AsyncStorageHook) {
+    type message = {
+      from: string,
+      to: string,
+      content: string
+    }
+    
+    try {
+      const d = await storage.getItem()
+      if ( d == null ) return
+  
+      const messages = JSON.parse(d) as message[]
+  
+      messages.forEach(m => {
+        const data = JSON.stringify({
+          type: 'MESSAGE',
+          data: {
+              from: m.from,
+              to: m.to,
+              content: m.content
+            }
+          })
+        ws.send(data)
+        
+      })
+  
+      storage.removeItem()
+  
+    }
+    catch(e: any) {
+      console.log('error\n', e)
+    }
+  }
