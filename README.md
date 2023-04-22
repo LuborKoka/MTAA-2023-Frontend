@@ -63,12 +63,12 @@ dependencies {
 }
 ```
 
-**_TOTO SI PRIDAJ NA KONIEC TOHO GRADLE SUBORU_**
+**_TOTO SI PRIDAJ NA KONIEC `android/app/build.gradle`_**
 
 ```.gradle
 apply plugin: 'com.google.gms.google-services'
 ```
 
-Aby ti isiel backend, budes potrebovat aj private key do firebase, ktory som mas na githube na backende. V `chat.ts` si skontroluj, ci ti potom sedi pathfile.
+Aby ti isiel backend, budes potrebovat aj private key do firebase, ktory si najdes na githube na backende. V `chat.ts` si skontroluj, ci ti potom sedi pathfile.
 
 Keby som nieco zabudol -> [Firebase Dokumentacia](https://firebase.google.com/docs/android/setup)
