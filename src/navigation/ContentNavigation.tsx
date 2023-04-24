@@ -206,7 +206,7 @@ export default function ContentNavigation(): JSX.Element {
     >
       <Drawer.Screen name="Finances" component={Finances} />
       <Drawer.Screen name="Market" component={Market} />
-      <Drawer.Screen name="Admin Settings" component={AdminSettings} />
+      {userData.isAdmin && (<Drawer.Screen name="Admin Settings" component={AdminSettings} />)}
       <Drawer.Screen name="History" component={History} />
       <Drawer.Screen name="Chat" component={Chat} />
       <Drawer.Screen name="Cart" component={Cart} />
