@@ -2,6 +2,7 @@ import React, { Context, useCallback, useContext, useEffect } from "react"
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerContentComponentProps } from "@react-navigation/drawer";
 import Finances from "../screens/Finances";
 import Market from "../screens/Market";
+import AdminSettings from "../screens/AdminSettings";
 import History from "../screens/History";
 import { ServerTypes, UserTypes, serverContext, user } from "../../App";
 import { useColorScheme, Alert } from "react-native";
@@ -205,6 +206,7 @@ export default function ContentNavigation(): JSX.Element {
     >
       <Drawer.Screen name="Finances" component={Finances} />
       <Drawer.Screen name="Market" component={Market} />
+      <Drawer.Screen name="Admin Settings" component={AdminSettings} />
       <Drawer.Screen name="History" component={History} />
       <Drawer.Screen name="Chat" component={Chat} />
       <Drawer.Screen name="Cart" component={Cart} />
