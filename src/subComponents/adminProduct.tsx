@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useColorScheme, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { BLACK, DARKER_WHITE, LIGHTER_BLACK } from '../constants/constants';
+import { BLACK, DARKER_WHITE, RED, WHITE } from '../constants/constants';
 import MatterialIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 interface ProductBoxProps {
@@ -41,7 +41,7 @@ export default function AdminProductBox({product} : ProductBoxProps){
         paddingHorizontal: 20,
         marginHorizontal: 20,
         marginVertical: 10,
-        backgroundColor: "#fff",
+        backgroundColor: isDark ? BLACK : WHITE,
         borderRadius: 10,
         shadowColor: "#000",
         shadowOffset: {
@@ -115,7 +115,7 @@ export default function AdminProductBox({product} : ProductBoxProps){
               <Text style={styles.editButtonText}>EDIT</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleDelete}>
-            <MatterialIcons name="delete" color={BLACK} size={40} />
+            <MatterialIcons name="delete" color={RED} size={40} />
             </TouchableOpacity>
           </View>
         </View>

@@ -21,7 +21,12 @@ interface imageResponse {
     image: string
 }
 
-function ProductWithImage({ product }) {
+
+interface props {
+  product: any
+}
+
+function ProductWithImage({ product }: props) {
     const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
     const productWithImage = { ...product, image };
     return <AdminProductBox product={productWithImage} />;
