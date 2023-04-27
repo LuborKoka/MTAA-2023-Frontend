@@ -20,7 +20,7 @@ interface imageResponse {
     image: string
 }
 
-function ProductWithImage({ product }) {
+function ProductWithImage({ product }: {product: any}) {
     const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
     const productWithImage = { ...product, image };
     return <ProductBox product={productWithImage} />;
