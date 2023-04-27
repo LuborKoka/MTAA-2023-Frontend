@@ -9,8 +9,6 @@ import 'react-native-get-random-values'
 import { v4 } from 'uuid';
 import { UserTypes, user } from '../../App'
 import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
-//src: https://pixabay.com/sound-effects/search/messaging/
-import Sound from 'react-native-sound'
 import NetInfo from '@react-native-community/netinfo'
 import { AsyncStorageHook } from '@react-native-async-storage/async-storage/lib/typescript/types'
 import { useNotification } from '../hooks/useNotification'
@@ -57,12 +55,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
 
     const input = useRef('')
     const ws = useRef<WebSocket | null>(null)
-    const audio = useRef(new Sound('new_message.mp3', Sound.MAIN_BUNDLE, (error) => {
-        if (error) {
-          console.log('Failed to load the sound', error)
-          return
-        }
-    }))
+ 
 
     const inputComponent = useRef<TextInput | null>(null)
     const history = useRef<storage['messages']>([])
@@ -228,8 +221,7 @@ export default function ChatWindow({ setIsOpenChat, isOpenChat, firstName, lastN
                         ...prevMessages, <Message key={v4()} content={message.data.content} isIncoming />
                     ])
                     if ( isBackground.current ) {
-                        audio.current.play()
-                        setTimeout(() => audio.current.stop(), 1000)
+                        
                     }
                     
                 }

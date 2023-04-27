@@ -10,6 +10,8 @@ import { useAsyncStorage } from "@react-native-async-storage/async-storage";
 import { PermissionsAndroid } from 'react-native'
 import messaging from '@react-native-firebase/messaging'
 import AsyncStorage from "@react-native-async-storage/async-storage";
+//src: https://pixabay.com/sound-effects/search/messaging/
+import Sound from 'react-native-sound'
 
 export interface ServerTypes {
   server: WebSocket | null
@@ -40,7 +42,6 @@ export const serverContext = createContext<ServerTypes | null>(null)
 function App(): JSX.Element {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
 
-  const server = useRef<ServerTypes | null>({server: null})
   const userData = useRef<UserTypes>({
     token: '',
     firstName: '',
@@ -50,6 +51,13 @@ function App(): JSX.Element {
     isAdmin: false,
     setIsAuthenticated: setIsAuthenticated
   })
+
+  const audio = useRef(new Sound('new_message.mp3', Sound.MAIN_BUNDLE, (error) => {
+    if (error) {
+      console.log('Failed to load the sound', error)
+      return
+    }
+  }))
 
 
   const { setItem } = useAsyncStorage('userLoginData')
@@ -109,8 +117,8 @@ function App(): JSX.Element {
     PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
 
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      //console.log(remoteMessage)
-      //ukazalo sa, ze nakoniec nemam v plane s tymto nic robit, ale pokial velmi chces, mozes si to upravit
+      audio.current.play()
+      setTimeout(() => audio.current.stop(), 1000)
     })
   
     return(() => unsubscribe())

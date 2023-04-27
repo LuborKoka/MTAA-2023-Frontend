@@ -4,8 +4,8 @@ import Finances from "../screens/Finances";
 import Market from "../screens/Market";
 import AdminSettings from "../screens/AdminSettings";
 import History from "../screens/History";
-import { ServerTypes, UserTypes, serverContext, user } from "../../App";
-import { useColorScheme, Alert } from "react-native";
+import { UserTypes, user } from "../../App";
+import { useColorScheme } from "react-native";
 import CartNavigation from "./CartNavigation";
 import Cart from "../screens/Cart";
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants";
@@ -16,8 +16,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 import { View, Text, StyleSheet } from 'react-native'
 import LinearGradient from "react-native-linear-gradient";
 import NetInfo from '@react-native-community/netinfo'
-import { useNotification } from "../hooks/useNotification";
-import { AsyncStorageHook } from "@react-native-async-storage/async-storage/lib/typescript/types";
 
 
 interface Chat_Update {
