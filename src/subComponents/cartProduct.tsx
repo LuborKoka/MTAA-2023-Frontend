@@ -46,6 +46,7 @@ function ProductDetails({ product, totalAmount }) {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
+            paddingLeft: 15
         },
         price: {
           fontWeight: 'bold',

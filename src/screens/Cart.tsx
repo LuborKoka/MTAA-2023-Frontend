@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, useColorScheme, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { Context, useContext } from 'react'
+import React, { Context, useContext, useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import { UserTypes, user } from '../../App'
 import CartProductBox from '../subComponents/cartProduct'
 import { BLACK, WHITE, DARKER_WHITE } from '../constants/constants'
+import RollUpWindow from '../subComponents/selectPaymentWindow'
 
 interface response {
   token?: string,
@@ -32,6 +33,17 @@ export default function Market() {
   const isDark = useColorScheme() === 'dark'
   const userData = useContext(user as Context<UserTypes>)
   const [data, isLoading, isError] = useFetch<response>('/products/init', `user_${userData.id}_market`)
+  const [visible, setVisible] = useState(false);
+
+  const [textItems, setTextItems] = useState([
+    'SK 31 0000 1111 222 333 444',
+    'SK 31 0000 1111 222 333 445',
+    'SK 31 0000 1111 222 333 446',
+    'SK 31 0000 1111 222 333 447',
+    'SK 31 0000 1111 222 333 448',
+    'SK 31 0000 1111 222 333 449',
+    'SK 31 0000 1111 222 333 450'
+  ]);
 
   const styles = StyleSheet.create({
     button: {
@@ -68,15 +80,16 @@ export default function Market() {
   });
 
   const totalAmount = data?.products.reduce((acc, product) => acc + product.cost, 0);
+ 
   const handleOrderButton = () => {
-    console.log('Order button clicked');
-  }
+    setVisible((prevVisible) => !prevVisible);
+  };
 
   const Line = () => { return <View style={styles.line} /> }
 
   return (
     <>
-      <ScrollView>
+      <ScrollView scrollEnabled={!visible}>
         {data?.products.sort((a, b) => a.id - b.id).map(product => (
           <ProductWithImage key={product.id} product={product} />
         ))}
@@ -87,6 +100,7 @@ export default function Market() {
         <TouchableOpacity style={styles.orderButton} onPress={handleOrderButton}>
           <Text style={styles.orderButtonText}>ORDER</Text>
         </TouchableOpacity>
+        <RollUpWindow visible={visible} setVisible={setVisible} texts={textItems} />
       </View>
     </>
   )
