@@ -351,13 +351,14 @@ export default function EditProductBox({product, visible, setVisible, onRefresh}
         }
       });
       const title = product.id === -1 ? "SUBMIT" : "SAVE"
+      const header = product.id === -1 ? "Create new product" : "Edit product details"
       return (
         <View style={styles.container}>
           <View style={styles.header}>
           <TouchableOpacity style={styles.removeButton} onPress={() => setVisible(false)}>
             <FontAwesome name="close" color={BLACK} size={25} />
           </TouchableOpacity>
-            <Text style={styles.headerText}>Edit product details</Text>
+            <Text style={styles.headerText}>{header}</Text>
           </View>
           <View style={styles.col}>
         <View style={styles.row}>
