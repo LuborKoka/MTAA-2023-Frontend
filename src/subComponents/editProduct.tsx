@@ -3,10 +3,13 @@ import { useColorScheme, Dimensions ,ScrollView, StyleSheet, Text, TextInput, To
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { BLACK, DARKER_WHITE, LIGHTER_BLACK } from '../constants/constants';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { UserTypes, user } from '../../App'
 import { URL } from '../constants/constants';
 import axios, { AxiosError } from 'axios'
+import { showMessage } from 'react-native-flash-message';
+
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
 
@@ -23,6 +26,7 @@ interface ProductBoxProps {
   product: ProductProps,
   visible: boolean,
   setVisible: React.Dispatch<React.SetStateAction<boolean>>
+  onRefresh: () => void
 }
 
 
@@ -128,7 +132,7 @@ const getCompanyId = async (user : UserTypes) => {
     return response.data.data.companyID;
 }
 
-export default function EditProductBox({product, visible, setVisible} : ProductBoxProps) {
+export default function EditProductBox({product, visible, setVisible, onRefresh} : ProductBoxProps) {
     const isDark = useColorScheme() === 'dark'
     const userData = useContext(user as Context<UserTypes>)      
     if(!product){
@@ -155,11 +159,22 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
         })
     }, [])
 
+    function checkUri(uri: string){
+      return uri.endsWith(".jpg")
+    }
+
     const handleImageUpload = async () => {
         launchImageLibrary({
           useBase64: true
         }, response => {
           if(response && response.assets[0]){
+            if(!checkUri(response.assets[0].uri)){
+              showMessage({ //UAT 10
+                message: "Please select a \"jpg\" image",
+                type: "warning"
+              })
+              return;
+            }
             setProductImage(response.assets[0].uri);
           }
           });
@@ -170,6 +185,13 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
           useBase64: true
        }, response => {
           if(response && response.assets[0]){
+            if(!checkUri(response.assets[0].uri)){
+              showMessage({ //UAT 10
+                message: "Please select a \"jpg\" image",
+                type: "warning"
+              })
+              return;
+            }
             setProductImage(response.assets[0].uri);
           }
           });
@@ -196,6 +218,25 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
        if(product.id === -1){
             const response = await axios.post(`${URL}/products/create`, form, {headers})
             if(response.status === 204){
+                const d = await AsyncStorage.getItem(`user_${userData.id}_market`)
+                showMessage({ //UAT 5
+                  message: `Product ${productName} was created successfully`,
+                  type: 'success'
+                })
+                //add product to local storage
+                //if(d){
+                 //   const data = JSON.parse(d) as ProductProps[]
+               //     data.push({
+                   //     id: data[data.length - 1].id + 1,
+                     //   name: productName,
+                       // description: productDescription,
+                        //companyID: companyId,
+                      //  cost: productCost,
+                       // amount: productAmount,
+                       // image: productImage
+                    //})
+                    //await AsyncStorage.setItem(`user_${userData.id}_market`, JSON.stringify(data))
+                //}
                 setVisible(false)
             }
        }else{
@@ -203,6 +244,10 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
             const response = await axios.put(`${URL}/products/update`, form, {headers})
             console.log(response.data)
             if(response.status === 200){
+              showMessage({ //UAT 7
+                message: `Product ${product.name} was updated successfully`,
+                type: 'success'
+              })
                 setVisible(false)
             }
        }
@@ -305,7 +350,7 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
             backgroundColor: DARKER_WHITE
         }
       });
-    
+      const title = product.id === -1 ? "SUBMIT" : "SAVE"
       return (
         <View style={styles.container}>
           <View style={styles.header}>
@@ -338,7 +383,7 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
                 </View>
                 <View style={styles.row}>
                 <View style={styles.buttonContainer}>
-                <Button color={DARKER_WHITE} title="Submit" onPress={handleSubmit}/>
+                <Button color={DARKER_WHITE} title={title} onPress={handleSubmit}/>
                 </View>
                 </View>
             </View>

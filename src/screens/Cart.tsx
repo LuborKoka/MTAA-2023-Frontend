@@ -1,10 +1,11 @@
-import { View, Text, ScrollView, useColorScheme, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, useColorScheme, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
 import React, { Context, useContext, useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import { UserTypes, user } from '../../App'
 import CartProductBox from '../subComponents/cartProduct'
 import { BLACK, WHITE, DARKER_WHITE } from '../constants/constants'
 import RollUpWindow from '../subComponents/selectPaymentWindow'
+import Loader from 'react-native-spinkit'
 
 interface response {
   token?: string,
@@ -23,13 +24,15 @@ interface imageResponse {
   image: string
 }
 
+const { height } = Dimensions.get('window');
+
 function ProductWithImage({ product } : any) {
   const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
   const productWithImage = { ...product, image };
   return <CartProductBox product={productWithImage} />;
 }
 
-export default function Market() {
+export default function Cart() {
   const isDark = useColorScheme() === 'dark'
   const userData = useContext(user as Context<UserTypes>)
   const [data, isLoading, isError] = useFetch<response>('/products/init', `user_${userData.id}_market`)
@@ -87,7 +90,14 @@ export default function Market() {
 
   const Line = () => { return <View style={styles.line} /> }
 
-  return (
+  const loader = (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', height: height - 100, backgroundColor: isDark ? BLACK : WHITE}}>
+      <Loader type='Circle' color={isDark ? WHITE : BLACK} size={120} />
+    </View> 
+  )
+
+
+  return ( isLoading ? loader :
     <>
       <ScrollView scrollEnabled={!visible}>
         {data?.products.sort((a, b) => a.id - b.id).map(product => (

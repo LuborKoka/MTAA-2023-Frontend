@@ -1,9 +1,11 @@
-import { ScrollView, useColorScheme } from 'react-native'
+import { ScrollView, useColorScheme, View, Dimensions} from 'react-native'
 import React, { Context, useContext, useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import { UserTypes, user } from '../../App'
 import ProductBox from '../subComponents/marketProduct'
 import ProductRollUpWindow from '../subComponents/productDetailsWindow'
+import Loader from 'react-native-spinkit'
+import { BLACK, WHITE } from '../constants/constants'
 
 interface response {
       token?: string,
@@ -21,6 +23,8 @@ interface imageResponse {
     image: string
 }
 
+const { height } = Dimensions.get('window');
+
 function ProductWithImage({ product, visible, setVisible, productToDisplay, setProductToDisplay }: {product: any, visible: boolean, setVisible: any, productToDisplay: any, setProductToDisplay: any}) {
     const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
     const productWithImage = { ...product, image };
@@ -34,7 +38,13 @@ export default function Market() {
   const [visible, setVisible] = useState(false);
   const [productToDisplay, setProductToDisplay] = useState({} as any);
 
-  return (
+  const loader = (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', height: height - 100, backgroundColor: isDark ? BLACK : WHITE}}>
+      <Loader type='Circle' color={isDark ? WHITE : BLACK} size={120} />
+    </View> 
+  )
+
+  return ( isLoading ? loader :
     <>
     <ScrollView scrollEnabled={!visible}>
     {data?.products.sort((a, b) => a.id - b.id).map(product => (
