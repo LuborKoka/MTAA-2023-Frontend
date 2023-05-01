@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext, Context } from 'react';
 import { useColorScheme, Dimensions ,ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, Button } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { BLACK, DARKER_WHITE, LIGHTER_BLACK } from '../constants/constants';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome'
-
+import { UserTypes, user } from '../../App'
+import { URL } from '../constants/constants';
+import axios, { AxiosError } from 'axios'
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
 
@@ -26,6 +28,10 @@ interface ProductBoxProps {
 
 interface ImageDisplayProps {
   binaryData: string;
+}
+
+interface companyProps {
+  companyID: number
 }
 
 function ImageDisplay({ binaryData }: ImageDisplayProps) {
@@ -108,12 +114,26 @@ const EditableTextInput = ({ header, text, setText, isNumeric = false }) => {
     },
   });
 
+const getCompanyId = async (user : UserTypes) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user.token}`
+    }
+
+    const body = JSON.stringify({
+        companyName : user.companyName
+    })
+
+    const response = await axios.post(`${URL}/company/init`, body, {headers})
+    return response.data.data.companyID;
+}
+
 export default function EditProductBox({product, visible, setVisible} : ProductBoxProps) {
     const isDark = useColorScheme() === 'dark'
-
+    const userData = useContext(user as Context<UserTypes>)      
     if(!product){
         product = {
-            id: 0,
+            id: -1,
             name: '',
             description: '',
             companyID: 0,
@@ -127,13 +147,20 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
     const [productCost, setProductCost] = useState(product.cost.toString());
     const [productAmount, setProductAmount] = useState(product.amount.toString());
     const [productImage, setProductImage] = useState('');
+    const [companyId, setCompanyId] = useState(-1);
+    
+    useEffect(() => {
+        getCompanyId(userData).then((id) => {
+            setCompanyId(id)
+        })
+    }, [])
 
     const handleImageUpload = async () => {
         launchImageLibrary({
           useBase64: true
         }, response => {
           if(response && response.assets[0]){
-            console.log(response.assets[0].uri);
+            setProductImage(response.assets[0].uri);
           }
           });
       };
@@ -143,10 +170,43 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
           useBase64: true
        }, response => {
           if(response && response.assets[0]){
-            console.log(response.assets[0].uri);
+            setProductImage(response.assets[0].uri);
           }
           });
       };
+
+    const handleSubmit = async () => {
+        const headers = {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${userData.token}`
+        }
+
+        const form = new FormData()
+            form.append('name', productName)
+            form.append('description', productDescription)
+            form.append('company_id', companyId.toString())
+            form.append('cost', productCost)
+            form.append('amount', productAmount)
+            form.append('image', {
+                uri: productImage,
+                type: 'image/jpeg',
+                name: 'image.jpg'
+            })
+
+       if(product.id === -1){
+            const response = await axios.post(`${URL}/products/create`, form, {headers})
+            if(response.status === 204){
+                setVisible(false)
+            }
+       }else{
+            form.append('id', product.id.toString())
+            const response = await axios.put(`${URL}/products/update`, form, {headers})
+            console.log(response.data)
+            if(response.status === 200){
+                setVisible(false)
+            }
+       }
+    };
 
     if (!visible) {
         return null;
@@ -278,7 +338,7 @@ export default function EditProductBox({product, visible, setVisible} : ProductB
                 </View>
                 <View style={styles.row}>
                 <View style={styles.buttonContainer}>
-                <Button color={DARKER_WHITE} title="Save" onPress={() => {}}/>
+                <Button color={DARKER_WHITE} title="Submit" onPress={handleSubmit}/>
                 </View>
                 </View>
             </View>
