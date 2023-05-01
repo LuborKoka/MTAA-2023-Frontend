@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useColorScheme, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { BLACK, DARKER_WHITE, LIGHTER_BLACK } from '../constants/constants';
+import ProductRollUpWindow from './productDetailsWindow';
 
+interface ProductProps {
+  id: number,
+  name: string,
+  description: string,
+  companyID: number,
+  cost: number,
+  amount: number,
+  image: string
+}
 interface ProductBoxProps {
-  product: {
-    id: number,
-    name: string,
-    description: string,
-    companyID: number,
-    cost: number,
-    image: string
-  }
+  product: ProductProps,
+  visible: boolean,
+  setVisible: React.Dispatch<React.SetStateAction<boolean>>
+  productToDisplay: any,
+  setProductToDisplay: React.Dispatch<React.SetStateAction<ProductProps>>
 }
 
 
@@ -28,7 +35,7 @@ function ImageDisplay({ binaryData }: ImageDisplayProps) {
   return <Image source={{ uri: imageData }} style={{ width: 90, height: 90 }} />;
 }
 
-export default function ProductBox({product} : ProductBoxProps){
+export default function ProductBox({product, visible, setVisible, productToDisplay, setProductToDisplay} : ProductBoxProps) {
     const isDark = useColorScheme() === 'dark'
 
     const styles = StyleSheet.create({
@@ -106,7 +113,9 @@ export default function ProductBox({product} : ProductBoxProps){
     }
 
     const handlePress = () => {
-      console.log(`Pressed ${product.name}!`);
+      setVisible(!visible);
+      setProductToDisplay(product);
+      console.log(visible);
     }
 
     return (

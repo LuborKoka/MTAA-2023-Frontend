@@ -10,8 +10,13 @@ interface ProductBoxProps {
     description: string,
     companyID: number,
     cost: number,
+    amount: number,
     image: string
   }
+  visible: boolean,
+  setVisible: React.Dispatch<React.SetStateAction<boolean>>
+  productToDisplay: any,
+  setProductToDisplay: React.Dispatch<React.SetStateAction<any>>
 }
 
 
@@ -29,7 +34,7 @@ function ImageDisplay({ binaryData }: ImageDisplayProps) {
   return <Image source={{ uri: imageData }} style={{ width: 90, height: 90 }} />;
 }
 
-export default function AdminProductBox({product} : ProductBoxProps){
+export default function AdminProductBox({product, visible, setVisible, productToDisplay, setProductToDisplay} : any) {
     const isDark = useColorScheme() === 'dark'
 
     const styles = StyleSheet.create({
@@ -96,7 +101,8 @@ export default function AdminProductBox({product} : ProductBoxProps){
     }
 
     const handleEdit = () => {
-      console.log(`Editting ${product.name}!`);
+      setVisible(true);
+      setProductToDisplay(product);
     }
 
     const handleDelete = () => {

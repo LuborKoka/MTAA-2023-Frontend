@@ -1,20 +1,16 @@
-import { ScrollView, useColorScheme, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { Context, useContext } from 'react'
+import { View, ScrollView, useColorScheme, TouchableOpacity, StyleSheet } from 'react-native'
+import React, { Context, useContext, useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import { UserTypes, user } from '../../App'
 import AdminProductBox from '../subComponents/adminProduct'
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import { BLACK, WHITE } from '../constants/constants'
+import EditProductBox  from '../subComponents/editProduct'
+
 interface response {
       token?: string,
-      products: {
-        id: number,
-        name: string,
-        description: string,
-        companyID: number,
-        cost: number
-      }[]
-    }
+      products: productProps[]
+  }
 
 interface imageResponse {
     token?: string,
@@ -22,43 +18,54 @@ interface imageResponse {
 }
 
 
-interface props {
-  product: any
+interface  productProps {
+  id: number,
+  name: string,
+  description: string,
+  companyID: number,
+  cost: number,
+  amount: number
 }
 
-function ProductWithImage({ product }: props) {
+function ProductWithImage({ product, visible, setVisible, productToDisplay, setProductToDisplay }: {product: productProps, visible: boolean, setVisible: any, productToDisplay: any, setProductToDisplay: any}) {
     const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
     const productWithImage = { ...product, image };
-    return <AdminProductBox product={productWithImage} />;
+    return <AdminProductBox product={productWithImage} visible={visible} setVisible={setVisible} productToDisplay={productToDisplay} setProductToDisplay={setProductToDisplay} />;
   }
 
 export default function Market() {
   const isDark = useColorScheme() === 'dark'
   const userData = useContext(user as Context<UserTypes>)
   const [data, isLoading, isError] = useFetch<response>('/products/init', `user_${userData.id}_market`)
+  const [visible, setVisible] = useState(false);
+  const [productToDisplay, setProductToDisplay] = useState({} as any);
 
   const styles = StyleSheet.create({
     button: {
       backgroundColor: WHITE,
       padding: 10,
-      alignItems: 'center',
+      alignItems: 'center'
     }
   });
 
   const handleNewButton = () => {
-    console.log('new Button clicked');
+    setVisible(true)
+    setProductToDisplay(null)
   }
 
   return (
     <>
     <ScrollView>
     {data?.products.sort((a, b) => a.id - b.id).map(product => (
-      <ProductWithImage key={product.id} product={product} />
+      <ProductWithImage key={product.id} product={product} visible={visible} setVisible={setVisible} productToDisplay={productToDisplay} setProductToDisplay={setProductToDisplay} />
     ))}
   </ScrollView>
-    <TouchableOpacity style={styles.button} onPress={handleNewButton}>
+  <View>
+    {!visible && <TouchableOpacity style={styles.button} onPress={handleNewButton}>
     <AntDesign name="pluscircleo" color={BLACK} size={40} />
-  </TouchableOpacity>
+  </TouchableOpacity>}
+  </View>
+  {visible && <EditProductBox product={productToDisplay} visible={visible} setVisible={setVisible} />}
   </>
   )
 }

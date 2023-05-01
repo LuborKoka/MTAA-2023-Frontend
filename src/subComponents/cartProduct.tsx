@@ -30,7 +30,7 @@ function ImageDisplay({ binaryData }: ImageDisplayProps) {
   return <Image source={{ uri: imageData }} style={{ width: 90, height: 90 }} />;
 }
 
-function ProductDetails({ product, totalAmount }) {
+export function ProductDetails({ product, totalAmount }) {
     const [amount, setAmount] = useState(totalAmount);
   
     const handleDecreaseAmount = () => {
