@@ -1,4 +1,4 @@
-import { View, ScrollView, useColorScheme, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, ScrollView, useColorScheme, TouchableOpacity, StyleSheet, Text, ActivityIndicator, Image } from 'react-native'
 import React, { Context, useContext, useEffect, useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import { UserTypes, user } from '../../App'
@@ -8,6 +8,9 @@ import { BLACK, WHITE } from '../constants/constants'
 import EditProductBox  from '../subComponents/editProduct'
 import Loader from 'react-native-spinkit'
 import { Dimensions } from 'react-native'
+import { URL as API_URL} from '../constants/constants' 
+import axios from 'axios'
+import RNFetchBlob from 'rn-fetch-blob';
 
 interface response {
       token?: string,
@@ -30,11 +33,7 @@ interface  productProps {
   amount: number
 }
 
-function ProductWithImage({ product, visible, setVisible, productToDisplay, setProductToDisplay }: {product: productProps, visible: boolean, setVisible: any, productToDisplay: any, setProductToDisplay: any}) {
-    const [image, isLoading, isError] = useFetch<imageResponse>(`/products/init/${product.id}`, `product_${product.id}_image`);
-    const productWithImage = { ...product, image };
-    return <AdminProductBox product={productWithImage} visible={visible} setVisible={setVisible} productToDisplay={productToDisplay} setProductToDisplay={setProductToDisplay} />;
-  }
+
 
 export default function AdminSettings() {
   const isDark = useColorScheme() === 'dark'
@@ -49,9 +48,64 @@ export default function AdminSettings() {
     setRefreshCount((prevCount) => prevCount + 1);
   };
 
+  async function getImageUrl(productId: number): Promise<string> {
+    try {
+      const header = {
+        'Authorization': `Bearer ${userData.token}`
+    }
+      const response = await axios.get(`${API_URL}/products/init/${productId}`, { headers: header, responseType: 'blob' });
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error getting image:', error);
+      return '';
+    }
+  }
+
+  function ProductWithImage({ product, visible, setVisible, productToDisplay, setProductToDisplay }: {product: productProps, visible: boolean, setVisible: any, productToDisplay: any, setProductToDisplay: any}) {
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const [image, setImage] = useState('');
+  
+    useEffect(() => {
+      const getImage = async () => {
+        try {
+          const header = {
+            'Authorization': `Bearer ${userData.token}`
+        }
+          const response = await axios.get(`${API_URL}/products/init/${product.id}`, { headers: header, responseType: 'blob' });
+          if (response) {
+            const blob = new Blob([response.data], { type: response.headers['content-type'] });
+            //const base64Image = await RNFetchBlob.fs.readFile(blob, 'base64');
+            //const imageUrl = `data:${blob.type};base64,${base64Image}`;
+            //console.log(imageUrl)
+          }
+        } catch (error) {
+          console.log(error);
+          setImageError(true);
+        } finally {
+          setImageLoaded(true);
+        }
+      };
+      //getImage();
+    }, [product]);
+  
+    if (imageError) {
+      //return <Text>Error loading image</Text>;
+    }
+  
+    if (!imageLoaded) {
+      //return <ActivityIndicator />;
+    }
+  
+    const productWithImage = { ...product, image };
+    <Image source={{ uri: image }} style={{ width: 100, height: 100 }} />
+      return <AdminProductBox product={productWithImage} visible={visible} setVisible={setVisible} productToDisplay={productToDisplay} setProductToDisplay={setProductToDisplay} />;
+    }
+
   const styles = StyleSheet.create({
     button: {
-      backgroundColor: WHITE,
+      backgroundColor: isDark ? BLACK : WHITE,
       padding: 10,
       alignItems: 'center'
     }

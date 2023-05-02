@@ -1,6 +1,6 @@
 import React, { useEffect, useState, Context, useContext } from 'react';
 import { useColorScheme, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { BLACK, DARKER_WHITE, RED, WHITE } from '../constants/constants';
+import { BLACK, DARKER_WHITE, LIGHTER_BLACK, RED, WHITE } from '../constants/constants';
 import MatterialIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { user, UserTypes } from '../../App';
 import axios from 'axios';
@@ -51,7 +51,7 @@ export default function AdminProductBox({product, visible, setVisible, productTo
         paddingHorizontal: 20,
         marginHorizontal: 20,
         marginVertical: 10,
-        backgroundColor: isDark ? BLACK : WHITE,
+        backgroundColor: WHITE,
         borderRadius: 10,
         shadowColor: "#000",
         shadowOffset: {

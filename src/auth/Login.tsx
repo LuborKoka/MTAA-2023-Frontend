@@ -8,6 +8,7 @@ import { showMessage } from 'react-native-flash-message'
 import { WHITE, BLACK, GREEN, URL } from "../constants/constants"
 import { useAsyncStorage } from "@react-native-async-storage/async-storage"
 import NetInfo from "@react-native-community/netinfo"
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface TokenInformation {
     firstName: string, 
@@ -80,7 +81,25 @@ export default function Login() {
                 })
             Vibration.vibrate(500)
         })
-        .finally(() => setIsLoading(false))
+        .finally(() => 
+        useEffect(() => {
+            const [cartItems, setCartItems] = useState([]);
+            async function loadCart() {
+              try {
+                const cartData = await AsyncStorage.getItem(`cart_${userData.id}`);
+                if (cartData !== null) {
+                  setCartItems(JSON.parse(cartData));
+                } else {
+                  setCartItems([]);
+                  await AsyncStorage.setItem(`cart_${userData.id}`, JSON.stringify([]));
+                }
+              } catch (error) {
+                console.log(error);
+              }
+            }
+            loadCart();
+            setIsLoading(false)
+          }, []));
     }
 
     const theme = createTheme({

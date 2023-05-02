@@ -9,6 +9,7 @@ import { showMessage } from 'react-native-flash-message'
 import { BLACK, WHITE, GREEN, URL } from "../constants/constants"
 import jwtDecode from "jwt-decode"
 import { useAsyncStorage } from "@react-native-async-storage/async-storage"
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ForwardedInput = forwardRef<TextInput, InputProps>((props, ref) => (
     <Input {...props} ref={ref as any} />
@@ -135,8 +136,27 @@ export default function CreateAccount() {
                 })
             Vibration.vibrate(500)
         })
-        .finally(() => setIsLoading(false))
+        .finally(() => 
+        useEffect(() => {
+            const [cartItems, setCartItems] = useState([]);
+            async function loadCart() {
+              try {
+                const cartData = await AsyncStorage.getItem(`cart_${userData.id}`);
+                if (cartData !== null) {
+                  setCartItems(JSON.parse(cartData));
+                } else {
+                  setCartItems([]);
+                  await AsyncStorage.setItem(`cart_${userData.id}`, JSON.stringify([]));
+                }
+              } catch (error) {
+                console.log(error);
+              }
+            }
+            loadCart();
+            setIsLoading(false)
+          }, []));
     }
+
 
     const style = StyleSheet.create({
         container: {

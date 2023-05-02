@@ -1,8 +1,10 @@
-import React from 'react';
+import React, {useState, useEffect, Context, useContext } from 'react';
 import { Dimensions ,ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Button } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { BLACK, DARKER_WHITE, WHITE } from '../constants/constants';
 import { ProductDetails } from './cartProduct';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserTypes, user } from '../../App'
 
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
@@ -20,38 +22,53 @@ interface productProps{
     visible: boolean,
     setVisible: React.Dispatch<React.SetStateAction<boolean>>
 }
-
-const TextBox = () => {
-    return (
-      <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Text style={styles.text}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas feugiat sollicitudin magna, vel varius justo facilisis id. Fusce ut venenatis tellus. Quisque ultricies, libero et pulvinar ultrices, sem nulla malesuada velit, at vulputate neque diam vel nibh.
-          </Text>
-        </ScrollView>
-      </View>
-    );
-  };
   
-  const styles = StyleSheet.create({
-    container: {
-      padding: 10,
-      backgroundColor: '#fff',
-    },
-    scrollContainer: {
-      flexGrow: 1,
-      width: 0.50 * windowWidth,
-      justifyContent: 'flex-start',
-    },
-    text: {
-      fontSize: 12
-    },
-  });  
+
+  type CartItem = {
+    id: number,
+    name: string,
+    description: string,
+    companyID: number,
+    cost: number
+    amount: number,
+    image: string
+  }
 
 const ProductRollUpWindow = ({ product, visible, setVisible }: productProps) => {
   if (!visible) {
     return null;
   }
+
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [editedItem, setEditedItem] = useState(null);
+  const userData = useContext(user as Context<UserTypes>)
+
+  const TextBox = () => {  
+    const styles = StyleSheet.create({
+      container: {
+        padding: 10,
+        backgroundColor: '#fff',
+      },
+      scrollContainer: {
+        flexGrow: 1,
+        width: 0.50 * windowWidth,
+        justifyContent: 'flex-start',
+      },
+      text: {
+        fontSize: 12
+      }
+    });
+  
+      return (
+        <View style={styles.container}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Text style={styles.text}>
+              {product.description}
+            </Text>
+          </ScrollView>
+        </View>
+      );
+    };
 
   const styles = StyleSheet.create({
     container: {
@@ -147,6 +164,11 @@ const ProductRollUpWindow = ({ product, visible, setVisible }: productProps) => 
     }
   });
 
+  const handleAddToCart = () => {
+    //addToCart(product);
+    setVisible(false);
+    console.log(cart.length)
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -169,7 +191,7 @@ const ProductRollUpWindow = ({ product, visible, setVisible }: productProps) => 
             <View style={styles.row}>
             <View style={styles.buttonContainer}>
             <Button color={DARKER_WHITE} title="CONTACT SELLER" onPress={() => {}}/>
-            <Button color={DARKER_WHITE} title="ADD TO CART" onPress={() => {}}/>
+            <Button color={DARKER_WHITE} title="ADD TO CART" onPress={handleAddToCart}/>
             </View>
             </View>
         </View>

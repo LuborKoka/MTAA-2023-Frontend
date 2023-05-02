@@ -18,6 +18,8 @@ interface ProductBoxProps {
   setVisible: React.Dispatch<React.SetStateAction<boolean>>
   productToDisplay: any,
   setProductToDisplay: React.Dispatch<React.SetStateAction<ProductProps>>
+  cart: ProductProps[],
+  setCart: React.Dispatch<React.SetStateAction<ProductProps[]>>
 }
 
 
@@ -35,7 +37,7 @@ function ImageDisplay({ binaryData }: ImageDisplayProps) {
   return <Image source={{ uri: imageData }} style={{ width: 90, height: 90 }} />;
 }
 
-export default function ProductBox({product, visible, setVisible, productToDisplay, setProductToDisplay} : ProductBoxProps) {
+export default function ProductBox({product, visible, setVisible, productToDisplay, setProductToDisplay, cart, setCart} : ProductBoxProps) {
     const isDark = useColorScheme() === 'dark'
 
     const styles = StyleSheet.create({
@@ -109,7 +111,11 @@ export default function ProductBox({product, visible, setVisible, productToDispl
     });
       
     const handleBuy = () => {
-      console.log(`Buying ${product.name} for ${product.cost}!`);
+      let newCart = cart;
+      let newProduct : ProductProps= product;
+      newProduct.amount = 1;
+      newCart.push(newProduct);
+      setCart(newCart);
     }
 
     const handlePress = () => {

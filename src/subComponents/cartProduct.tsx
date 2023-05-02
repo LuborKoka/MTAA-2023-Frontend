@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useColorScheme, View, Text, TextInput, Image, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { BLACK, DARKER_WHITE, LIGHTER_BLACK, RED } from '../constants/constants';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { showMessage } from 'react-native-flash-message'
 
 interface ProductBoxProps {
   product: {
@@ -12,7 +13,9 @@ interface ProductBoxProps {
     cost: number,
     image: string,
     amount: number
-  }
+  },
+  cart : any,
+  setCart : any
 }
 
 
@@ -35,10 +38,18 @@ export function ProductDetails({ product, totalAmount }) {
   
     const handleDecreaseAmount = () => {
       setAmount(amount - 1);
+      showMessage({
+        message: "Product amount decreased",
+        type: "success",
+      });
     };
   
     const handleIncreaseAmount = () => {
       setAmount(amount + 1);
+      showMessage({
+        message: "Product amount increased",
+        type: "success",
+      });
     };
     
     const styles = StyleSheet.create({
@@ -182,7 +193,10 @@ export default function CartProductBox({product} : ProductBoxProps){
     });
       
     const handleRemove = () => {
-        console.log(`Deleting ${product.name}!`);
+        showMessage({
+          message: `Product ${product.name} removed from cart`,
+          type: "success",
+        });
     }
   
     return (
